@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Briefcase, MapPin, Calendar, Plus } from "lucide-react";
+import { axiosInstance } from "../../lib/axios";
 import { useState } from "react";
 import JobPostingForm from "../../components/JobPostingForm/JobPostingForm";
 
@@ -10,9 +11,8 @@ const JobsPage = () => {
   const { data, isLoading, error } = useQuery({
     queryKey: ["jobs"],
     queryFn: async () => {
-      const res = await fetch("http://localhost:5000/api/v1/jobs");
-      if (!res.ok) throw new Error("Failed to fetch jobs");
-      return res.json();
+      const res = await axiosInstance.get("/jobs");
+      return res.data;
     },
   });
 

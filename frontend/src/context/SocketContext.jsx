@@ -1,76 +1,62 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { io } from "socket.io-client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRecoilValue } from "recoil";
+import { authUserState } from "../atoms/authAtom";
+import { toast } from "react-hot-toast";
 
 const SocketContext = createContext();
 
 export const useSocket = () => {
-	return useContext(SocketContext);
+    return useContext(SocketContext);
 };
 
 export const SocketProvider = ({ children }) => {
-	const [socket, setSocket] = useState(null);
-	const [onlineUsers, setOnlineUsers] = useState([]);
-	const [lastSharedProject, setLastSharedProject] = useState(null); // Store last shared project and sender
-	const queryClient = useQueryClient();
-	const { data: authUser } = useQuery({ queryKey: ["authUser"] });
+    const [socket, setSocket] = useState(null);
+    const [isConnected, setIsConnected] = useState(false);
+    const authUser = useRecoilValue(authUserState);
 
-useEffect(() => {
-	// Always connect to socket server regardless of authentication
-	console.log("Connecting socket with userId", authUser?._id);
+    useEffect(() => {
+        let newSocket = null;
 
-	// Connect to socket server, pass userId in auth
-	const socketInstance = io(import.meta.env.MODE === "development" ? "http://localhost:5000" : "", {
-		withCredentials: true,
-		auth: { userId: authUser?._id },
-		transports: ['websocket', 'polling'],
-		reconnectionAttempts: 5,
-		reconnectionDelay: 1000,
-		autoConnect: true
-	});
-	
-	// Debug socket connection
-	console.log("Socket instance created:", {
-		url: socketInstance.io.uri,
-		transports: socketInstance.io.opts.transports,
-		connected: socketInstance.connected
-	});
+        if (authUser?._id) {
+            newSocket = io("http://localhost:5000", {
+                auth: {
+                    userId: authUser._id
+                },
+                transports: ["websocket", "polling"]
+            });
 
-	const handleConnect = () => {
-		console.log("Connected to socket server");
-		setSocket(socketInstance);
-	};
-	const handleDisconnect = () => {
-		setSocket(null);
-	};
-	socketInstance.on("connect", handleConnect);
-	socketInstance.on("disconnect", handleDisconnect);
-	socketInstance.on("connect_error", (err) => {
-		console.error("Socket connection error:", err.message);
-		console.log("Socket connection details:", {
-			url: socketInstance.io.uri,
-			transports: socketInstance.io.opts.transports,
-			auth: socketInstance.auth,
-			connected: socketInstance.connected
-		});
-		setSocket(null);
-	});
+            newSocket.on("connect", () => {
+                console.log("Socket connected!");
+                setIsConnected(true);
+            });
 
-	// Listen for project_shared event globally
-	socketInstance.on("project_shared", (data) => {
-		console.log("Received project_shared event:", data);
-		setLastSharedProject(data); // Store project and sender
-		queryClient.invalidateQueries(["notifications"]); // Refetch notifications
-	});
+            newSocket.on("disconnect", () => {
+                console.log("Socket disconnected!");
+                setIsConnected(false);
+            });
 
-	return () => {
-		socketInstance.off("connect", handleConnect);
-		socketInstance.off("disconnect", handleDisconnect);
-		socketInstance.off("project_shared");
-		socketInstance.disconnect();
-		setSocket(null);
-	};
-}, []);
+            newSocket.on("connect_error", (error) => {
+                console.error("Socket connection error:", error.message);
+                toast.error("Connection error: " + error.message);
+                setIsConnected(false);
+            });
 
-	return <SocketContext.Provider value={{ socket, onlineUsers, lastSharedProject }}>{children}</SocketContext.Provider>;
+            setSocket(newSocket);
+        }
+
+        return () => {
+            if (newSocket) {
+                newSocket.disconnect();
+                setSocket(null);
+                setIsConnected(false);
+            }
+        };
+    }, [authUser?._id]);
+
+    return (
+        <SocketContext.Provider value={{ socket, isConnected }}>
+            {children}
+        </SocketContext.Provider>
+    );
 };

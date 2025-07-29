@@ -1,15 +1,15 @@
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Briefcase, MapPin, Calendar } from "lucide-react";
+import { axiosInstance } from "../../lib/axios";
 
 const JobDetailsPage = () => {
   const { id } = useParams();
   const { data: job, isLoading, error } = useQuery({
     queryKey: ["job", id],
     queryFn: async () => {
-      const res = await fetch(`http://localhost:5000/api/v1/jobs${id}`);
-      if (!res.ok) throw new Error("Failed to fetch job");
-      return res.json();
+      const res = await axiosInstance.get(`/jobs/${id}`);
+      return res.data;
     },
   });
 
@@ -44,4 +44,4 @@ const JobDetailsPage = () => {
   );
 };
 
-export default JobDetailsPage; 
+export default JobDetailsPage;

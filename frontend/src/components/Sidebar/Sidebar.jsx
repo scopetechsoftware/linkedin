@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Home, UserPlus, Bell, Briefcase, Users, GraduationCap, Building } from "lucide-react";
+import { Home, UserPlus, Bell, Briefcase, Users, GraduationCap, Building, Share2 } from "lucide-react";
 import { useState } from "react";
 import AffiliationForm from "../AffiliationForm/AffiliationForm";
 import JobPostingForm from "../JobPostingForm/JobPostingForm";
@@ -143,6 +143,14 @@ export default function Sidebar({ user }) {
 								</button>
 							</li>
 						)}
+						<li>
+							<Link
+                                to={`/profile-share/${user.username}`}
+                                className='flex items-center py-2 px-4 rounded-md hover:bg-primary hover:text-white transition-colors'
+                            >
+                                <Share2 className='mr-2' size={20} /> Profile Share
+                            </Link>
+                        </li>
 					</ul>
 				</nav>
 			</div>
