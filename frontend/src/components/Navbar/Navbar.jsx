@@ -5,6 +5,8 @@ import { Bell, Home, LogOut, User, Users } from "lucide-react";
 import { useState } from "react";
 import ChatIcon from "../Chat/ChatIcon";
 import ChatWindow from "../Chat/ChatWindow";
+ // make sure axios is set up with auth token
+
 
 const Navbar = () => {
     const {data: authUser} = useQuery({
@@ -13,6 +15,9 @@ const Navbar = () => {
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [selectedChat, setSelectedChat] = useState(null);
     const queryClient = useQueryClient();
+
+
+    
 
     const {data: notifications} = useQuery({
         queryKey: ['notifications'],

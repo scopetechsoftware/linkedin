@@ -2,13 +2,16 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "../../lib/axios";
 import toast from "react-hot-toast";
 import Sidebar from "../../components/Sidebar/Sidebar.jsx";
-import { ExternalLink, Eye, MessageSquare, ThumbsUp, Trash2, UserPlus } from "lucide-react";
+import { ExternalLink, Eye, MessageSquare, ThumbsUp, Trash2, UserPlus, Share2, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
+import { useState } from "react";
 
 const NotificationsPage = () => {
     const { data: authUser } = useQuery({ queryKey: ["authUser"] });
     const queryClient = useQueryClient();
+    // State for project ratings
+    const [projectRatings, setProjectRatings] = useState({});
 
     const { data: notifications, isLoading } = useQuery({
 		queryKey: ["notifications"],
@@ -29,6 +32,66 @@ const NotificationsPage = () => {
 			toast.success("Notification deleted");
 		},
 	});
+	
+	// Rate project mutation
+	const { mutate: rateProjectMutation } = useMutation({
+		mutationFn: ({ projectId, rating, comment }) => {
+			return axiosInstance.post(`/projects/${projectId}/rate`, {
+				rating,
+				comment
+			});
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries(["notifications"]);
+			toast.success("Project rated successfully");
+		},
+		onError: (error) => {
+			toast.error("Failed to rate project");
+		},
+	});
+	
+	// Handle rating a project
+	const handleRateProject = (projectId, rating) => {
+		setProjectRatings(prev => ({
+			...prev,
+			[projectId]: {
+				...prev[projectId],
+				rating
+			}
+		}));
+	};
+	
+	// Handle comment change
+	const handleCommentChange = (projectId, comment) => {
+		setProjectRatings(prev => ({
+			...prev,
+			[projectId]: {
+				...prev[projectId],
+				comment
+			}
+		}));
+	};
+	
+	// Submit rating and comment
+	const handleSubmitRating = (projectId) => {
+		const projectRating = projectRatings[projectId];
+		if (!projectRating || !projectRating.rating) {
+			toast.error("Please select a rating");
+			return;
+		}
+		
+		rateProjectMutation({
+			projectId,
+			rating: projectRating.rating,
+			comment: projectRating.comment || ""
+		});
+		// Clear local state after submit
+		setProjectRatings(prev => {
+			const newRatings = { ...prev };
+			delete newRatings[projectId];
+			return newRatings;
+		});
+	};
 
     // render the notifications icon
     const renderNotificationIcon = (type) => {
@@ -40,6 +103,10 @@ const NotificationsPage = () => {
 				return <MessageSquare className='text-green-500' />;
 			case "connectionAccepted":
 				return <UserPlus className='text-purple-500' />;
+			case "projectShared":
+				return <Share2 className='text-blue-500' />;
+			case "projectRated":
+				return <Star className='text-yellow-500' />;
 			default:
 				return null;
 		}
@@ -50,27 +117,162 @@ const NotificationsPage = () => {
 		switch (notification.type) {
 			case "like":
 				return (
-					<span>
-						<strong>{notification.relatedUser.name}</strong> liked your post
-					</span>
+					<div className='flex flex-col'>
+						<p>
+							<Link
+								to={`/profile/${notification.relatedUser.username}`}
+								className='font-semibold hover:underline'
+							>
+								{notification.relatedUser.name}
+							</Link>{" "}
+							liked your post
+						</p>
+						<Link
+							to={`/post/${notification.relatedPost._id}`}
+							className='text-sm text-gray-500 hover:underline flex items-center gap-1'
+						>
+							<ExternalLink className='h-3 w-3' /> View post
+						</Link>
+					</div>
 				);
 			case "comment":
 				return (
-					<span>
-						<Link to={`/profile/${notification.relatedUser.username}`} className='font-bold'>
-							{notification.relatedUser.name}
-						</Link>{" "}
-						commented on your post
-					</span>
+					<div className='flex flex-col'>
+						<p>
+							<Link
+								to={`/profile/${notification.relatedUser.username}`}
+								className='font-semibold hover:underline'
+							>
+								{notification.relatedUser.name}
+							</Link>{" "}
+							commented on your post
+						</p>
+						<Link
+							to={`/post/${notification.relatedPost._id}`}
+							className='text-sm text-gray-500 hover:underline flex items-center gap-1'
+						>
+							<ExternalLink className='h-3 w-3' /> View post
+						</Link>
+					</div>
 				);
 			case "connectionAccepted":
 				return (
-					<span>
-						<Link to={`/profile/${notification.relatedUser.username}`} className='font-bold'>
-							{notification.relatedUser.name}
-						</Link>{" "}
-						accepted your connection request
-					</span>
+					<div className='flex flex-col'>
+						<p>
+							<Link
+								to={`/profile/${notification.relatedUser.username}`}
+								className='font-semibold hover:underline'
+							>
+								{notification.relatedUser.name}
+							</Link>{" "}
+							accepted your connection request
+						</p>
+						<Link
+							to={`/profile/${notification.relatedUser.username}`}
+							className='text-sm text-gray-500 hover:underline flex items-center gap-1'
+						>
+							<ExternalLink className='h-3 w-3' /> View profile
+						</Link>
+					</div>
+				);
+			case "projectShared":
+				return (
+					<div className='flex flex-col'>
+						<p>
+							<Link
+								to={`/profile/${notification.relatedUser.username}`}
+								className='font-semibold hover:underline'
+							>
+								{notification.relatedUser.name}
+							</Link>{" "}
+							shared a project with you
+						</p>
+						{notification.relatedProject && (
+							<div className="mt-2 p-3 bg-gray-50 rounded-md">
+								<h3 className="font-medium">{notification.relatedProject.name}</h3>
+								<p className="text-sm text-gray-600 mt-1">{notification.relatedProject.description}</p>
+								
+								{/* Rating Component */}
+								<div className="mt-3">
+									<p className="text-sm font-medium mb-1">Rate this project:</p>
+									<div className="flex items-center gap-1">
+										{[1, 2, 3, 4, 5].map((star) => (
+											<button
+												key={star}
+												className={`text-xl ${star <= (projectRatings[notification.relatedProject._id]?.rating || 0) ? 'text-yellow-500' : 'text-gray-300'}`}
+												onClick={() => handleRateProject(notification.relatedProject._id, star)}
+											>
+												★
+											</button>
+										))}
+									</div>
+									
+									{/* Comment Box */}
+									<div className="mt-2">
+										<textarea
+											className="w-full p-2 border rounded-md text-sm"
+											rows="2"
+											placeholder="Add a comment..."
+											value={projectRatings[notification.relatedProject._id]?.comment || ""}
+											onChange={(e) => handleCommentChange(notification.relatedProject._id, e.target.value)}
+										></textarea>
+										<button
+											className="mt-1 px-3 py-1 bg-primary text-white text-sm rounded-md hover:bg-primary-dark"
+											onClick={() => handleSubmitRating(notification.relatedProject._id)}
+										>
+											Submit
+										</button>
+									</div>
+								</div>
+								
+								<div className="mt-3 flex gap-2">
+									{notification.relatedProject.gitlink && (
+										<a 
+											href={notification.relatedProject.gitlink} 
+											target="_blank" 
+											rel="noopener noreferrer"
+											className="text-xs bg-gray-200 px-2 py-1 rounded flex items-center gap-1"
+										>
+											<ExternalLink className="h-3 w-3" /> GitHub
+										</a>
+									)}
+									{notification.relatedProject.projecturl && (
+										<a 
+											href={notification.relatedProject.projecturl} 
+											target="_blank" 
+											rel="noopener noreferrer"
+											className="text-xs bg-gray-200 px-2 py-1 rounded flex items-center gap-1"
+										>
+											<ExternalLink className="h-3 w-3" /> Live Demo
+										</a>
+									)}
+								</div>
+							</div>
+						)}
+					</div>
+				);
+			case "projectRated":
+				return (
+					<div className='flex flex-col'>
+						<p>
+							<Link
+								to={`/profile/${notification.relatedUser.username}`}
+								className='font-semibold hover:underline'
+							>
+								{notification.relatedUser.name}
+							</Link>{" "}
+							rated your project {notification.rating} stars
+						</p>
+						{notification.comment && (
+							<p className="text-sm text-gray-600 mt-1 italic">"{notification.comment}"</p>
+						)}
+						<Link
+							to={`/projects/${notification.relatedProject?._id}`}
+							className='text-sm text-gray-500 hover:underline flex items-center gap-1 mt-1'
+						>
+							<ExternalLink className='h-3 w-3' /> View project
+						</Link>
+					</div>
 				);
 			default:
 				return null;

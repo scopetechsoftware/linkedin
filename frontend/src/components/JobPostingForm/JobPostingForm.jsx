@@ -12,7 +12,7 @@ const initialState = {
   outDate: "",
 };
 
-const JobPostingForm = ({ isOpen, onClose }) => {
+const JobPostingForm = ({ isOpen, onClose, onPosted }) => {
   const [form, setForm] = useState(initialState);
   const [error, setError] = useState("");
 
@@ -50,7 +50,8 @@ const JobPostingForm = ({ isOpen, onClose }) => {
         throw new Error((data && data.message) || "Failed to post job");
       }
       toast.success("Job posted successfully!");
-      onClose();
+      if (onPosted) onPosted();
+      else onClose();
       setForm(initialState);
     } catch (err) {
       setError(err.message);

@@ -1,8 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Briefcase, MapPin, Calendar } from "lucide-react";
+import { Briefcase, MapPin, Calendar, Plus } from "lucide-react";
+import { useState } from "react";
+import JobPostingForm from "../../components/JobPostingForm/JobPostingForm";
 
 const JobsPage = () => {
+  const queryClient = useQueryClient();
+  const [showJobForm, setShowJobForm] = useState(false);
   const { data, isLoading, error } = useQuery({
     queryKey: ["jobs"],
     queryFn: async () => {
@@ -12,12 +16,30 @@ const JobsPage = () => {
     },
   });
 
+  // Handler to refresh jobs after posting
+  const handleJobPosted = () => {
+    setShowJobForm(false);
+    queryClient.invalidateQueries(["jobs"]);
+  };
+
   if (isLoading) return <div className="p-8 text-center">Loading jobs...</div>;
   if (error) return <div className="p-8 text-center text-red-500">{error.message}</div>;
 
   return (
     <div className="max-w-3xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">Job Postings</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Job Postings</h1>
+        <button
+          onClick={() => setShowJobForm(true)}
+          className="bg-primary text-white py-2 px-4 rounded flex items-center"
+        >
+          <Plus size={18} className="mr-1" /> Post Job
+        </button>
+      </div>
+
+      {/* Job Posting Modal */}
+      <JobPostingForm isOpen={showJobForm} onClose={() => setShowJobForm(false)} onPosted={handleJobPosted} />
+
       <div className="space-y-4">
         {data && data.length > 0 ? (
           data.map((job) => (
@@ -49,4 +71,4 @@ const JobsPage = () => {
   );
 };
 
-export default JobsPage; 
+export default JobsPage;

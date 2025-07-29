@@ -3,10 +3,33 @@ import { Home, UserPlus, Bell, Briefcase, Users, GraduationCap, Building } from 
 import { useState } from "react";
 import AffiliationForm from "../AffiliationForm/AffiliationForm";
 import JobPostingForm from "../JobPostingForm/JobPostingForm";
+import { useEffect } from "react";
+import axios from "axios"; // make sure axios is set up with auth token
+
 
 export default function Sidebar({ user }) {
 	const [isAffiliationFormOpen, setIsAffiliationFormOpen] = useState(false);
 	const [isJobPostingFormOpen, setIsJobPostingFormOpen] = useState(false);
+	const [averageRating, setAverageRating] = useState(null);
+
+	useEffect(() => {
+		const fetchAverageRating = async () => {
+			try {
+				const res = await axios.get("http://localhost:5000/api/projects/my/average-rating");
+
+				console.log("Fetched average rating:", res.data); // for debugging
+				setAverageRating(res.data.average);
+			} catch (err) {
+				console.error("Failed to fetch average rating", err);
+			}
+		};
+	
+		if (user) {
+			fetchAverageRating(); // fetch for all users
+		}
+	}, [user]);
+	
+
 
 	const handleOpenAffiliationForm = () => {
 		setIsAffiliationFormOpen(true);
@@ -35,6 +58,15 @@ export default function Sidebar({ user }) {
 				</Link>
 				<p className='text-info'>{user.headline}</p>
 				<p className='text-info text-xs'>{user.connections.length} connections</p>
+				{averageRating !== null && averageRating !== undefined && averageRating !== "" && (
+	<p className='text-warning text-xs mt-1'>
+		⭐ Average Project Rating: <strong>{averageRating}</strong>/5
+	</p>
+)}
+
+
+
+
 			</div>
 			<div className='border-t border-base-100 p-4'>
 				<nav>
@@ -121,10 +153,10 @@ export default function Sidebar({ user }) {
 			</div>
 
 			{(user.role === "company" || user.role === "university") && (
-				<AffiliationForm 
-					isOpen={isAffiliationFormOpen} 
-					onClose={() => setIsAffiliationFormOpen(false)} 
-					userRole={user.role} 
+				<AffiliationForm
+					isOpen={isAffiliationFormOpen}
+					onClose={() => setIsAffiliationFormOpen(false)}
+					userRole={user.role}
 				/>
 			)}
 			<JobPostingForm isOpen={isJobPostingFormOpen} onClose={() => setIsJobPostingFormOpen(false)} />

@@ -1,9 +1,11 @@
+import React from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "../../lib/axios";
 import { toast } from "react-hot-toast";
 import { useState } from "react";
-import { Briefcase, ExternalLink, Github, Trash2, Edit, Plus } from "lucide-react";
+import { Briefcase, ExternalLink, Github, Trash2, Edit, Plus, Share2 } from "lucide-react";
 import Sidebar from "../../components/Sidebar/Sidebar";
+import { useSocket } from "../../context/SocketContext";
 
 // Helper function to read file as data URL
 const readFileAsDataURL = (file) => {
@@ -29,6 +31,154 @@ const ProjectsPage = () => {
     });
     const [searchQuery, setSearchQuery] = useState("");
     const [collaborators, setCollaborators] = useState([]);
+    const [showShareModal, setShowShareModal] = useState(false);
+    const [shareProjectId, setShareProjectId] = useState(null);
+    const [shareSearch, setShareSearch] = useState("");
+    const [shareResults, setShareResults] = useState([]);
+    const [selectedShareUsers, setSelectedShareUsers] = useState([]);
+    const [isSending, setIsSending] = useState(false);
+    const { socket } = useSocket();
+
+    // Listen for project_shared event
+    React.useEffect(() => {
+        if (!socket) return;
+        const handler = (data) => {
+            toast.success(
+                data.sender && data.sender.name
+                    ? `${data.sender.name} shared a project with you: ${data.project.name}`
+                    : `A project was shared with you: ${data.project.name}`
+            );
+            // Optionally, you can update state or refetch projects here
+        };
+        socket.on("project_shared", handler);
+        return () => {
+            socket.off("project_shared", handler);
+        };
+    }, [socket]);
+    // Share project handler
+    const handleShareClick = (projectId) => {
+        setShareProjectId(projectId);
+        setShowShareModal(true);
+        setShareSearch("");
+        setShareResults([]);
+    };
+
+    // Search users for sharing (show all returned by backend, no filtering)
+    const handleShareSearch = async (query) => {
+        setShareSearch(query);
+        if (!query) {
+            setShareResults([]);
+            return;
+        }
+        try {
+            const res = await axiosInstance.get(`/users/suggestions?search=${encodeURIComponent(query)}`);
+            // No filtering: show all users returned by backend
+            setShareResults(res.data);
+        } catch (err) {
+            setShareResults([]);
+        }
+    };
+
+    // Toggle user selection for sharing
+    const handleToggleShareUser = (user) => {
+        setSelectedShareUsers((prev) => {
+            if (prev.some((u) => u._id === user._id)) {
+                return prev.filter((u) => u._id !== user._id);
+            } else {
+                return [...prev, user];
+            }
+        });
+    };
+
+    // Send project to selected users via socket
+    const handleSendShare = () => {
+        console.log("handleSendShare called", {
+            socketExists: !!socket,
+            socketConnected: socket?.connected,
+            socketId: socket?.id,
+            shareProjectId,
+            selectedShareUsers,
+        });
+        
+        // Debug socket events
+        if (socket) {
+            console.log("Current socket listeners:", socket._callbacks);
+        }
+        if (!socket) {
+            console.error("Socket not connected - socket object is null");
+            toast.error("Socket not connected");
+            return;
+        }
+        if (!socket.connected) {
+            // Try to reconnect the socket without JWT token
+            socket.connect();
+            if (!socket.connected) {
+                console.error("Socket exists but is not connected to server");
+                toast.error("Socket not connected to server");
+                return;
+            }
+        }
+        if (!shareProjectId) {
+            toast.error("No project selected to share");
+            return;
+        }
+        if (selectedShareUsers.length === 0) {
+            toast.error("No users selected to share with");
+            return;
+        }
+
+        // Set loading state
+        setIsSending(true);
+
+        // Track successful shares
+        let successCount = 0;
+
+        // Listen for success events
+        const handleShareSuccess = () => {
+            successCount++;
+            if (successCount === selectedShareUsers.length) {
+                toast.success(`Project shared with ${selectedShareUsers.length} user(s)`);
+                setShowShareModal(false);
+                setShareProjectId(null);
+                setShareSearch("");
+                setShareResults([]);
+                setSelectedShareUsers([]);
+                setIsSending(false);
+                // Remove the listener after all shares are processed
+                socket.off("project_share_success", handleShareSuccess);
+                socket.off("error", handleShareError);
+            }
+        };
+
+        // Listen for error events
+        const handleShareError = (error) => {
+            toast.error(error.message || "Failed to share project");
+            setIsSending(false);
+            // Remove listeners
+            socket.off("project_share_success", handleShareSuccess);
+            socket.off("error", handleShareError);
+        };
+
+        // Add listeners
+        socket.on("project_share_success", handleShareSuccess);
+        socket.on("error", handleShareError);
+
+        // Send share requests
+        selectedShareUsers.forEach((user) => {
+            console.log("Emitting share_project", { projectId: shareProjectId, toUserId: user._id });
+            socket.emit("share_project", { projectId: shareProjectId, toUserId: user._id });
+        });
+        
+        // Set a timeout to handle case where server doesn't respond
+        setTimeout(() => {
+            if (isSending) {
+                setIsSending(false);
+                socket.off("project_share_success", handleShareSuccess);
+                socket.off("error", handleShareError);
+                toast.error("Sharing timed out. Please try again.");
+            }
+        }, 10000); // 10 second timeout
+    };
 
     // Fetch user projects
     const { data: projects = [], isLoading } = useQuery({
@@ -38,7 +188,7 @@ const ProjectsPage = () => {
             return res.data;
         },
     });
-    
+
     // Fetch users for collaborator search
     const { data: userList = [] } = useQuery({
         queryKey: ["userList"],
@@ -53,26 +203,26 @@ const ProjectsPage = () => {
         mutationFn: async (projectData) => {
             // Create FormData for file uploads
             const formData = new FormData();
-            
+
             // Add project data to FormData
             formData.append('name', projectData.name);
             formData.append('description', projectData.description);
             formData.append('gitlink', projectData.gitlink);
             formData.append('projecturl', projectData.projecturl);
             formData.append('type', projectData.type);
-            
+
             // Add collaborators as JSON string
             if (projectData.collaborators && projectData.collaborators.length > 0) {
                 formData.append('collaborators', JSON.stringify(projectData.collaborators));
             }
-            
+
             // Add files to FormData
             if (projectData.files && projectData.files.length > 0) {
                 for (let i = 0; i < projectData.files.length; i++) {
                     formData.append('files', projectData.files[i]);
                 }
             }
-            
+
             const res = await axiosInstance.post("/projects", formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
@@ -118,26 +268,26 @@ const ProjectsPage = () => {
             deleteProject(projectId);
         }
     };
-    
+
     const handleProjectSubmit = () => {
         if (!projectData.name) {
             return toast.error("Project name is required");
         }
-        
+
         const formData = {
             ...projectData,
             collaborators: collaborators.map(c => c._id)
         };
-        
+
         createProject(formData);
     };
 
     const formatDate = (dateString) => {
         const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', { 
-            year: 'numeric', 
-            month: 'short', 
-            day: 'numeric' 
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
         });
     };
 
@@ -158,7 +308,7 @@ const ProjectsPage = () => {
                             <Plus size={18} className="mr-1" /> Add Project
                         </button>
                     </div>
-                    
+
                     {/* Project Form */}
                     {showProjectForm && (
                         <div className="project-form p-6 bg-gray-50 rounded-lg shadow-sm mb-6 border">
@@ -277,7 +427,7 @@ const ProjectsPage = () => {
                                     {collaborators.map(c => (
                                         <span key={c._id} className="tag bg-gray-200 px-2 py-1 rounded-full text-sm flex items-center">
                                             {c.name}
-                                            <button 
+                                            <button
                                                 onClick={() => setCollaborators(collaborators.filter(col => col._id !== c._id))}
                                                 className="ml-1 text-gray-500 hover:text-gray-700"
                                             >
@@ -289,15 +439,15 @@ const ProjectsPage = () => {
                             )}
 
                             <div className="flex justify-end gap-3 mt-4">
-                                <button 
-                                    type="button" 
+                                <button
+                                    type="button"
                                     onClick={() => setShowProjectForm(false)}
                                     className="bg-gray-200 text-gray-800 py-2 px-4 rounded hover:bg-gray-300 transition-colors"
                                 >
                                     Cancel
                                 </button>
-                                <button 
-                                    type="button" 
+                                <button
+                                    type="button"
                                     onClick={handleProjectSubmit}
                                     className="bg-primary text-white py-2 px-4 rounded hover:bg-primary-dark transition-colors"
                                 >
@@ -326,28 +476,88 @@ const ProjectsPage = () => {
                                         <div className="flex justify-between items-start">
                                             <h3 className="text-lg font-semibold">{project.name}</h3>
                                             <div className="flex space-x-2">
-                                                <button 
+                                                <button
                                                     onClick={() => handleDeleteProject(project._id)}
                                                     className="text-red-500 hover:text-red-700"
                                                     title="Delete project"
                                                 >
                                                     <Trash2 size={18} />
                                                 </button>
+                                                <button
+                                                    onClick={() => handleShareClick(project._id)}
+                                                    className="text-blue-500 hover:text-blue-700"
+                                                    title="Share project"
+                                                >
+                                                    <Share2 size={18} />
+                                                </button>
+                                                {/* Share Modal */}
+                                                {showShareModal && (
+                                                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                                                        <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto relative">
+                                                            <button onClick={() => { setShowShareModal(false); setSelectedShareUsers([]); }} className="absolute top-2 right-2 text-gray-500 hover:text-gray-700">&times;</button>
+                                                            <h2 className="text-xl font-bold mb-4">Share Project</h2>
+                                                            <input
+                                                                type="text"
+                                                                value={shareSearch}
+                                                                onChange={e => handleShareSearch(e.target.value)}
+                                                                placeholder="Search user by name or email"
+                                                                className="w-full border rounded px-2 py-1 mb-3"
+                                                                autoFocus
+                                                            />
+                                                            <ul className="max-h-40 overflow-y-auto mb-3">
+                                                                {shareResults.length === 0 && shareSearch && (
+                                                                    <li className="text-gray-500 p-2">No users found.</li>
+                                                                )}
+                                                                {shareResults.map(user => {
+                                                                    const isSelected = selectedShareUsers.some(u => u._id === user._id);
+                                                                    return (
+                                                                        <li
+                                                                            key={user._id}
+                                                                            className={`p-2 hover:bg-gray-100 cursor-pointer flex items-center justify-between ${isSelected ? 'bg-blue-50' : ''}`}
+                                                                            onClick={() => handleToggleShareUser(user)}
+                                                                        >
+                                                                            <div className="flex items-center">
+                                                                                <img src={user.profilePicture || "/avatar.png"} alt={user.name} className="w-6 h-6 rounded-full mr-2" />
+                                                                                <span>{user.name} {user.email && <span className="text-xs text-gray-500 ml-1">({user.email})</span>}</span>
+                                                                            </div>
+                                                                            {isSelected && <span className="text-green-600 font-bold ml-2">&#10003;</span>}
+                                                                        </li>
+                                                                    );
+                                                                })}
+                                                            </ul>
+                                                            <button
+                                                                className="w-full bg-primary text-white py-2 rounded hover:bg-primary-dark disabled:opacity-50"
+                                                                disabled={selectedShareUsers.length === 0 || !socket || !socket?.connected || isSending}
+                                                                onClick={handleSendShare}
+                                                            >
+                                                                {isSending ? "Sending..." : !socket ? "Socket Not Available" : !socket.connected ? "Socket Not Connected" : "Send"}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
+                                        <div className="flex items-center gap-1 mt-1">
+  {Array.from({ length: 5 }).map((_, i) => (
+    <span key={i} className={i < Math.round(project.averageRating) ? "text-yellow-500" : "text-gray-300"}>★</span>
+  ))}
+  <span className="ml-1 text-sm text-gray-600">
+    ({project.averageRating ? project.averageRating.toFixed(1) : "0.0"})
+  </span>
+</div>
                                         <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mt-2">
                                             {project.type.charAt(0).toUpperCase() + project.type.slice(1)}
                                         </span>
                                     </div>
-                                    
+
                                     <div className="p-4">
                                         <p className="text-gray-600 mb-4">{project.description || "No description provided."}</p>
-                                        
+
                                         <div className="flex flex-wrap gap-2 mb-4">
                                             {project.gitlink && (
-                                                <a 
-                                                    href={project.gitlink} 
-                                                    target="_blank" 
+                                                <a
+                                                    href={project.gitlink}
+                                                    target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="flex items-center text-sm text-gray-600 hover:text-primary"
                                                 >
@@ -355,11 +565,11 @@ const ProjectsPage = () => {
                                                     GitHub
                                                 </a>
                                             )}
-                                            
+
                                             {project.projecturl && (
-                                                <a 
-                                                    href={project.projecturl} 
-                                                    target="_blank" 
+                                                <a
+                                                    href={project.projecturl}
+                                                    target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="flex items-center text-sm text-gray-600 hover:text-primary"
                                                 >
@@ -368,16 +578,16 @@ const ProjectsPage = () => {
                                                 </a>
                                             )}
                                         </div>
-                                        
+
                                         {project.collaborators && project.collaborators.length > 0 && (
                                             <div className="mb-4">
                                                 <h4 className="text-sm font-medium mb-2">Collaborators:</h4>
                                                 <div className="flex flex-wrap gap-2">
                                                     {project.collaborators.map(collab => (
                                                         <div key={collab._id} className="flex items-center bg-gray-100 px-2 py-1 rounded-full text-xs">
-                                                            <img 
-                                                                src={collab.profilePicture || "/avatar.png"} 
-                                                                alt={collab.name} 
+                                                            <img
+                                                                src={collab.profilePicture || "/avatar.png"}
+                                                                alt={collab.name}
                                                                 className="w-4 h-4 rounded-full mr-1"
                                                             />
                                                             {collab.name}
@@ -386,7 +596,7 @@ const ProjectsPage = () => {
                                                 </div>
                                             </div>
                                         )}
-                                        
+
                                         <div className="text-xs text-gray-500">
                                             Created: {formatDate(project.createdAt)}
                                         </div>
