@@ -27,7 +27,7 @@ const PORT = process.env.PORT || 5000;
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
 	cors: {
-		origin: process.env.NODE_ENV !== "production" ? "http://localhost:5173" : undefined,
+		origin: process.env.NODE_ENV !== "production" ? ["http://localhost:5173", "http://localhost:5174", "http://localhost:5175"] : undefined,
 		credentials: true,
 	},
 });
@@ -36,7 +36,7 @@ const io = new Server(httpServer, {
 if (process.env.NODE_ENV !== "production") {
 	app.use(
 		cors({
-			origin: "http://localhost:5173",
+			origin: ["http://localhost:5173", "http://localhost:5174", "http://localhost:5175"],
 			credentials: true,
 		})
 	);
@@ -63,35 +63,93 @@ if (process.env.NODE_ENV === "production") {
 	});
 }
 
-// Socket.IO middleware for authentication
-io.use(async (socket, next) => {
-	try {
-		const token = socket.handshake.auth.token;
-		if (!token) {
-			return next(new Error("Authentication error: Token not provided"));
-		}
-
-		const decoded = jwt.verify(token, process.env.JWT_SECRET);
-		if (!decoded) {
-			return next(new Error("Authentication error: Invalid token"));
-		}
-
-		const user = await User.findById(decoded.userId).select("-password");
-		if (!user) {
-			return next(new Error("Authentication error: User not found"));
-		}
-
-		socket.user = user;
-		next();
-	} catch (error) {
-		console.error("Socket authentication error:", error.message);
-		next(new Error("Authentication error"));
+// Socket.IO connection without authentication
+io.use((socket, next) => {
+	const userId = socket.handshake.auth && socket.handshake.auth.userId;
+	if (userId) {
+		socket.user = { _id: userId };
+		console.log("Socket handshake with userId:", userId);
+	} else {
+		console.log("Socket connection without userId!");
 	}
+	next();
 });
 
 // Socket.IO connection handling
 io.on("connection", (socket) => {
-	console.log(`User connected: ${socket.user.name} (${socket.user._id})`);
+	console.log("A socket connected!", socket.user?._id);
+
+	// Register the share_project handler FIRST
+	socket.on("share_project", async (data) => {
+		try {
+			console.log("Received share_project event:", data, "User:", socket.user);
+			const { projectId, toUserId } = data;
+			if (!projectId || !toUserId) {
+				console.log("Missing projectId or toUserId");
+				socket.emit("error", { message: "Missing projectId or toUserId" });
+				return;
+			}
+
+			// Import models using ES modules syntax
+			const Project = await import("./models/project.model.js").then(module => module.default);
+			const User = await import("./models/user.model.js").then(module => module.default);
+			const Notification = await import("./models/notification.model.js").then(module => module.default);
+
+			// Fetch project details
+			const project = await Project.findById(projectId)
+				.populate("collaborators", "_id name profilePicture")
+				.lean();
+			if (!project) {
+				console.log("Project not found:", projectId);
+				socket.emit("error", { message: "Project not found" });
+				return;
+			}
+
+			// Fetch sender info
+			const sender = await User.findById(socket.user._id).select("_id name profilePicture").lean();
+
+			// Create notification for the recipient
+			const notification = new Notification({
+				recipient: toUserId,
+				type: "projectShared",
+				relatedUser: socket.user._id,
+				relatedProject: projectId
+			});
+			await notification.save();
+			console.log("Created notification:", notification);
+
+			// Check if recipient is connected
+			const recipientSocketId = Object.keys(io.sockets.adapter.rooms.get(toUserId.toString()) || {});
+			console.log("Recipient socket status:", {
+				toUserId,
+				recipientRoom: toUserId.toString(),
+				recipientConnected: recipientSocketId.length > 0,
+				recipientSocketIds: recipientSocketId
+			});
+
+			// Emit to the recipient's room
+			io.to(toUserId.toString()).emit("project_shared", {
+				project,
+				sender,
+			});
+			console.log("Emitted project_shared event to recipient:", toUserId.toString());
+
+			// Send confirmation back to sender
+			socket.emit("project_share_success", {
+				projectId,
+				toUserId
+			});
+			console.log("Emitted project_share_success event to sender");
+		} catch (err) {
+			console.error("Error in share_project handler:", err);
+			socket.emit("error", { message: "Failed to share project" });
+		}
+	});
+
+	// Register the onAny handler AFTER
+	socket.onAny((event, ...args) => {
+		console.log("Socket received event:", event, args);
+	});
 
 	// Join a room for the user's ID to receive direct messages
 	socket.join(socket.user._id.toString());
@@ -284,6 +342,6 @@ io.on("connection", (socket) => {
 });
 
 httpServer.listen(PORT, () => {
-    console.log(`Server is listening on ${PORT}....`);
-    connectDB();
+	console.log(`Server is listening on ${PORT}....`);
+	connectDB();
 });

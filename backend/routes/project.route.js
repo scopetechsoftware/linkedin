@@ -5,7 +5,10 @@ import {
   getUserProjects,
   getProjectById,
   updateProject,
-  deleteProject
+  deleteProject,
+  rateProject,
+  getProjectRatings,
+  getOverallProjectRating
 } from '../controllers/project.controller.js';
 import upload from '../middleware/multer.middleware.js';
 
@@ -28,5 +31,14 @@ router.put('/:id', upload.array('files', 10), updateProject);
 
 // Delete a project
 router.delete('/:id', deleteProject);
+
+// Rate a project
+router.post('/:id/rate', rateProject);
+
+// Get project ratings
+router.get('/:id/ratings', getProjectRatings);
+
+router.get('/my/average-rating', getOverallProjectRating);
+
 
 export default router;

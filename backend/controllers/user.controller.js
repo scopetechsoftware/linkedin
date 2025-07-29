@@ -4,14 +4,16 @@ export const getSuggestedConnections = async (req, res) => {
 	try {
 		const currentUser = await User.findById(req.user._id).select("connections");
 
+		const search = req.query.search || "";
 		const suggestedUser = await User.find({
-			_id: {
-				$ne: req.user._id,
-				$nin: currentUser.connections,
-			},
+			_id: { $ne: req.user._id },
+			$or: [
+				{ name: { $regex: search, $options: "i" } },
+				{ email: { $regex: search, $options: "i" } }
+			]
 		})
 			.select("name username profilePicture headline")
-			.limit(3);
+			.limit(10);
 
 		res.json(suggestedUser);
 	} catch (error) {
