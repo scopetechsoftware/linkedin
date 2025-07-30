@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 export const connectDB = async () => {
     try {
-        console.log("MONGO_URI from .env:", process.env.MONGO_URI); // 🔍 Debug line
+        console.log("MONGO_URl from .env:", process.env.MONGO_URI); // 🔍 Debug line
 
         const conn = await mongoose.connect(process.env.MONGO_URI);
         console.log(`✅ MongoDB connected: ${conn.connection.host}`);

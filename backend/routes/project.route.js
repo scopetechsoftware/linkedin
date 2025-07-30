@@ -8,7 +8,8 @@ import {
   deleteProject,
   rateProject,
   getProjectRatings,
-  getOverallProjectRating
+  getOverallProjectRating,
+  getProjectsByUsername
 } from '../controllers/project.controller.js';
 import upload from '../middleware/multer.middleware.js';
 
@@ -22,6 +23,9 @@ router.post('/', upload.array('files', 10), createProject);
 
 // Get all projects for the current user
 router.get('/', getUserProjects);
+
+// Get projects by username
+router.get('/user/:username', getProjectsByUsername);
 
 // Get a specific project by ID
 router.get('/:id', getProjectById);

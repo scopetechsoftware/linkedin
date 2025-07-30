@@ -289,3 +289,36 @@ export const getProjectRatings = async (req, res) => {
 		res.status(500).json({ message: 'Failed to fetch ratings' });
 	}
 };
+
+// Get projects by username
+export const getProjectsByUsername = async (req, res) => {
+	try {
+		// Find the user by username
+		const user = await User.findOne({ username: req.params.username });
+		
+		if (!user) {
+			return res.status(404).json({ message: "User not found" });
+		}
+		
+		// Find projects where the user is the owner
+		const projects = await Project.find({ owner: user._id })
+			.populate("owner", "name username profilePicture")
+			.populate("collaborators", "name username profilePicture")
+			.sort({ createdAt: -1 })
+			.lean();
+
+		// For each project, calculate average rating
+		const projectsWithRatings = await Promise.all(projects.map(async (project) => {
+			const ratings = await ProjectRating.find({ project: project._id });
+			const avg = ratings.length
+				? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
+				: 0;
+			return { ...project, averageRating: avg };
+		}));
+
+		res.json(projectsWithRatings);
+	} catch (error) {
+		console.error("Error getting projects by username:", error);
+		res.status(500).json({ message: "Server error" });
+	}
+};
