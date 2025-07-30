@@ -12,6 +12,7 @@ import NotificationsPage from "./pages/NotificationsPage/NotificationsPage.jsx";
 import NetworkPage from "./pages/NetworkPage/NetworkPage.jsx";
 import PostPage from "./pages/PostPage/PostPage.jsx";
 import ProfilePage from "./pages/ProfilePage/ProfilePage";
+import SettingsPage from "./pages/SettingsPage/SettingsPage";
 import ProjectsPage from "./pages/ProjectsPage/ProjectsPage.jsx";
 import AffiliationsPage from "./pages/AffiliationsPage/AffiliationsPage.jsx";
 import JobsPage from "./pages/JobsPage/JobsPage";
@@ -58,6 +59,7 @@ export default function App() {
           <Route path='/post/:postId' element={authUser ? <PostPage /> : <Navigate to={"/login"} />} />
           <Route path='/profile/:username' element={authUser ? <ProfilePage /> : <Navigate to={"/login"} />} />
           <Route path='/profile-share/:username' element={authUser ? <ProfileSharePage /> : <Navigate to={"/login"} />} />
+          <Route path='/settings' element={authUser ? <SettingsPage /> : <Navigate to={"/login"} />} />
           <Route path='/projects' element={authUser ? <ProjectsPage /> : <Navigate to={"/login"} />} />
           <Route path='/affiliations' element={authUser ? <AffiliationsPage /> : <Navigate to={"/login"} />} />
           <Route path="/jobs" element={<JobsPage />} />

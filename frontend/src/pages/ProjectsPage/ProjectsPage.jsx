@@ -39,6 +39,10 @@ const ProjectsPage = () => {
     const [isSending, setIsSending] = useState(false);
     const { socket } = useSocket();
 
+    
+  const [files, setFiles] = useState([]);
+ 
+
     // Listen for project_shared event
     React.useEffect(() => {
         if (!socket) return;
@@ -99,7 +103,7 @@ const ProjectsPage = () => {
             shareProjectId,
             selectedShareUsers,
         });
-        
+
         // Debug socket events
         if (socket) {
             console.log("Current socket listeners:", socket._callbacks);
@@ -168,7 +172,7 @@ const ProjectsPage = () => {
             console.log("Emitting share_project", { projectId: shareProjectId, toUserId: user._id });
             socket.emit("share_project", { projectId: shareProjectId, toUserId: user._id });
         });
-        
+
         // Set a timeout to handle case where server doesn't respond
         setTimeout(() => {
             if (isSending) {
@@ -212,16 +216,13 @@ const ProjectsPage = () => {
             formData.append('type', projectData.type);
 
             // Add collaborators as JSON string
-            if (projectData.collaborators && projectData.collaborators.length > 0) {
-                formData.append('collaborators', JSON.stringify(projectData.collaborators));
+            for (let i = 0; i < files.length; i++) {
+                formData.append("files", files[i]); // ✅ name matches multer.array('files')
             }
-
             // Add files to FormData
-            if (projectData.files && projectData.files.length > 0) {
-                for (let i = 0; i < projectData.files.length; i++) {
-                    formData.append('files', projectData.files[i]);
-                }
-            }
+            files.forEach((file) => {
+    formData.append("files", file);
+  });
 
             const res = await axiosInstance.post("/projects", formData, {
                 headers: {
@@ -375,11 +376,13 @@ const ProjectsPage = () => {
                                     <input
                                         type="file"
                                         name="files"
-                                        directory=""
                                         multiple
-                                        className="w-full p-2 border rounded"
-                                        onChange={(e) => setProjectData({ ...projectData, files: Array.from(e.target.files) })}
+                                       onChange={(e) => setFiles(Array.from(e.target.files))}
                                     />
+
+                                    <small className="text-gray-500 mt-1 block">
+                                        Supported file types: Images, Documents, Code files, Media files
+                                    </small>
                                 </div>
 
                                 <div className="mb-3">
@@ -538,13 +541,13 @@ const ProjectsPage = () => {
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-1 mt-1">
-  {Array.from({ length: 5 }).map((_, i) => (
-    <span key={i} className={i < Math.round(project.averageRating) ? "text-yellow-500" : "text-gray-300"}>★</span>
-  ))}
-  <span className="ml-1 text-sm text-gray-600">
-    ({project.averageRating ? project.averageRating.toFixed(1) : "0.0"})
-  </span>
-</div>
+                                            {Array.from({ length: 5 }).map((_, i) => (
+                                                <span key={i} className={i < Math.round(project.averageRating) ? "text-yellow-500" : "text-gray-300"}>★</span>
+                                            ))}
+                                            <span className="ml-1 text-sm text-gray-600">
+                                                ({project.averageRating ? project.averageRating.toFixed(1) : "0.0"})
+                                            </span>
+                                        </div>
                                         <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mt-2">
                                             {project.type.charAt(0).toUpperCase() + project.type.slice(1)}
                                         </span>

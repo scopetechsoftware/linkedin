@@ -50,7 +50,7 @@ const HomePage = () => {
 	const { data: projectRating } = useQuery({
 		queryKey: ["projectRating"],
 		queryFn: async () => {
-			const res = await axiosInstance.get("/projects/rating/overall");
+			const res = await axiosInstance.get("/projects/my/average-rating");
 			return res.data;
 		},
 	});

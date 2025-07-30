@@ -4,7 +4,7 @@ import { useState } from "react";
 import AffiliationForm from "../AffiliationForm/AffiliationForm";
 import JobPostingForm from "../JobPostingForm/JobPostingForm";
 import { useEffect } from "react";
-import axios from "axios"; // make sure axios is set up with auth token
+import { axiosInstance } from "../../lib/axios";
 
 
 export default function Sidebar({ user }) {
@@ -15,7 +15,7 @@ export default function Sidebar({ user }) {
 	useEffect(() => {
 		const fetchAverageRating = async () => {
 			try {
-				const res = await axios.get("http://localhost:5000/api/projects/my/average-rating");
+				const res = await axiosInstance.get("/projects/my/average-rating");
 
 				console.log("Fetched average rating:", res.data); // for debugging
 				setAverageRating(res.data.average);
