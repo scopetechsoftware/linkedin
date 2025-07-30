@@ -20,18 +20,18 @@ export const createProject = async (req, res) => {
 		});
 
 		// Handle file uploads if any (using multer)
-		if (req.files && req.files.length > 0) {
-			const uploadedFiles = [];
-			for (const file of req.files) {
-				uploadedFiles.push({
-					name: file.originalname,
-					path: file.path.replace(/.*uploads[\\/]/, ''), // relative to uploads/
-					type: file.mimetype,
-					size: file.size,
-				});
-			}
-			newProject.files = uploadedFiles;
-		}
+		// If req.body.files is a stringified array, parse it safely
+if (req.body.files) {
+  try {
+    const parsedFiles = JSON.parse(req.body.files);
+    if (Array.isArray(parsedFiles)) {
+      newProject.files = parsedFiles;
+    }
+  } catch (err) {
+    console.error("Error parsing files:", err);
+  }
+}
+
 
 		// Save the project
 		await newProject.save();
@@ -39,7 +39,7 @@ export const createProject = async (req, res) => {
 		res.status(201).json(newProject);
 	} catch (error) {
 		console.error("Error creating project:", error);
-		res.status(500).json({ message: "Server error" });
+		res.status(500).json({ message: error.message || "Server error" });
 	}
 };
 
@@ -128,12 +128,17 @@ export const updateProject = async (req, res) => {
 		if (req.files && req.files.length > 0) {
 			const uploadedFiles = [];
 			for (const file of req.files) {
-				uploadedFiles.push({
-					name: file.originalname,
-					path: file.path.replace(/.*uploads[\\/]/, ''), // relative to uploads/
-					type: file.mimetype,
-					size: file.size,
-				});
+				try {
+					uploadedFiles.push({
+						name: file.originalname,
+						path: file.path.replace(/.*uploads[\\/]/, ''), // relative to uploads/
+						type: file.mimetype,
+						size: file.size,
+					});
+				} catch (fileError) {
+					console.error("Error processing file:", fileError, file);
+					// Continue with other files even if one fails
+				}
 			}
 			project.files = [...(project.files || []), ...uploadedFiles];
 		}
@@ -144,7 +149,7 @@ export const updateProject = async (req, res) => {
 		res.json(project);
 	} catch (error) {
 		console.error("Error updating project:", error);
-		res.status(500).json({ message: "Server error" });
+		res.status(500).json({ message: error.message || "Server error" });
 	}
 };
 
@@ -298,6 +303,12 @@ export const getProjectsByUsername = async (req, res) => {
 		
 		if (!user) {
 			return res.status(404).json({ message: "User not found" });
+		}
+		
+		// Check if the profile is private and the requester is not the profile owner
+		if (user.privacySettings?.isProfilePrivate && 
+			(!req.user || req.user._id.toString() !== user._id.toString())) {
+			return res.json([]);
 		}
 		
 		// Find projects where the user is the owner

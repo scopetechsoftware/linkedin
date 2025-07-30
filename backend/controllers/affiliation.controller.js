@@ -155,7 +155,7 @@ export const searchUsers = async (req, res) => {
                 { username: { $regex: query, $options: 'i' } }
             ],
             _id: { $ne: req.user._id } // Exclude the current user
-        }).select('name email username profilePicture headline').limit(10);
+        }).select('name email username profilePicture headline location privacySettings').limit(10);
 
         res.json(users);
     } catch (error) {
@@ -172,6 +172,12 @@ export const getAffiliationsByUsername = async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
+        
+        // Check if the profile is private and the requester is not the profile owner
+        if (user.privacySettings?.isProfilePrivate && req.user._id.toString() !== user._id.toString()) {
+            return res.json([]);
+        }
+        
         const affiliations = await Affiliation.find({ affiliated: user._id })
             .populate("affiliator", "name email username profilePicture headline")
             .sort({ startDate: -1 });

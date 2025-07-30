@@ -12,7 +12,7 @@ export const getSuggestedConnections = async (req, res) => {
 				{ email: { $regex: search, $options: "i" } }
 			]
 		})
-			.select("name username profilePicture headline")
+			.select("name username profilePicture headline location privacySettings")
 			.limit(10);
 
 		res.json(suggestedUser);
@@ -28,6 +28,20 @@ export const getPublicProfile = async (req, res) => {
 
 		if (!user) {
 			return res.status(404).json({ message: "User not found" });
+		}
+
+		// Check if the profile is private and the requester is not the profile owner
+		if (user.privacySettings?.isProfilePrivate && req.user._id.toString() !== user._id.toString()) {
+			// Return only basic information for private profiles
+			const limitedProfile = {
+				_id: user._id,
+				name: user.name,
+				username: user.username,
+				profilePicture: user.profilePicture,
+				location: user.location,
+				privacySettings: { isProfilePrivate: true }
+			};
+			return res.json(limitedProfile);
 		}
 
 		res.json(user);
@@ -48,13 +62,49 @@ export const updateProfile = async (req, res) => {
 			"skills",
 			"experience",
 			"education",
+			"privacySettings",
 		];
 
 		const updatedData = {};
 
 		for (const field of allowedFields) {
-			if (req.body[field]) {
-				updatedData[field] = req.body[field];
+			if (req.body[field] !== undefined) {
+				// Parse JSON strings for array fields or objects
+				if (field === 'skills' || field === 'experience' || field === 'education' || field === 'privacySettings') {
+					try {
+						// Special handling for privacySettings to ensure it's properly parsed
+						if (field === 'privacySettings') {
+							if (typeof req.body[field] === 'string') {
+								// Check if it's the '[object Object]' string representation
+								if (req.body[field] === '[object Object]') {
+									// Default to an object with isProfilePrivate set to the value in the request or false
+									updatedData[field] = { isProfilePrivate: req.body.isProfilePrivate === 'true' || false };
+								} else {
+									// Try to parse it as JSON
+									try {
+										updatedData[field] = JSON.parse(req.body[field]);
+									} catch (e) {
+										console.error(`Error parsing ${field}:`, e);
+										// Default to an object with isProfilePrivate set to false
+										updatedData[field] = { isProfilePrivate: false };
+									}
+								}
+							} else {
+								// It's already an object
+								updatedData[field] = req.body[field];
+							}
+						} else {
+							// For other fields, use the existing logic
+							updatedData[field] = typeof req.body[field] === 'string' ? 
+								JSON.parse(req.body[field]) : req.body[field];
+						}
+					} catch (e) {
+						console.error(`Error parsing ${field}:`, e);
+						updatedData[field] = req.body[field];
+					}
+				} else {
+					updatedData[field] = req.body[field];
+				}
 			}
 		}
 

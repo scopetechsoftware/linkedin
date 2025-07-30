@@ -34,6 +34,12 @@ const userSchema = new mongoose.Schema(
 			type: String,
 			default: "",
 		},
+		privacySettings: {
+			isProfilePrivate: {
+				type: Boolean,
+				default: false,
+			},
+		},
 		skills: [String],
 		experience: [
 			{

@@ -23,7 +23,7 @@ export const searchPeople = async (req, res) => {
                 { email: { $regex: searchQuery, $options: 'i' } },
                 { username: { $regex: searchQuery, $options: 'i' } }
             ]
-        }).select('name email username avatar role').limit(10);
+        }).select('name email username avatar role profilePicture headline location privacySettings').limit(10);
 
         console.log('Search query:', searchQuery, 'Found users:', users.length);
         res.status(200).json(users);
@@ -121,7 +121,7 @@ export const searchCompanies = async (req, res) => {
                 { headline: { $regex: query, $options: 'i' } },
                 { location: { $regex: query, $options: 'i' } }
             ]
-        }).select('name headline location profilePicture').limit(10);
+        }).select('name headline location profilePicture privacySettings').limit(10);
 
         res.status(200).json(companyUsers);
     } catch (error) {

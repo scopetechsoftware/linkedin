@@ -141,7 +141,7 @@ export const getUserConnections = async (req, res) => {
 
 		const user = await User.findById(userId).populate(
 			"connections",
-			"name username profilePicture headline connections"
+			"name username profilePicture headline location connections privacySettings"
 		);
 
 		res.json(user.connections);
