@@ -5,18 +5,65 @@ import Sidebar from "../../components/Sidebar/Sidebar.jsx";
 import { ExternalLink, Eye, MessageSquare, ThumbsUp, Trash2, UserPlus, Share2, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "../../context/AuthContext.jsx";
 
 const NotificationsPage = () => {
     const { data: authUser } = useQuery({ queryKey: ["authUser"] });
+    const { user } = useAuth();
     const queryClient = useQueryClient();
     // State for project ratings
     const [projectRatings, setProjectRatings] = useState({});
+    // State to track which projects the user has already rated
+    const [userRatedProjects, setUserRatedProjects] = useState({});
 
     const { data: notifications, isLoading } = useQuery({
 		queryKey: ["notifications"],
 		queryFn: () => axiosInstance.get("/notifications"),
 	});
+	
+	// Fetch projects that the current user has already rated
+	useEffect(() => {
+		if (!user) return;
+		
+		const fetchUserRatings = async () => {
+			try {
+				// Get all projects from notifications
+				const projectIds = notifications?.data
+					?.filter(n => n.type === "projectShared" && n.relatedProject)
+					?.map(n => n.relatedProject._id) || [];
+				
+				// Remove duplicates
+				const uniqueProjectIds = [...new Set(projectIds)];
+				
+				if (uniqueProjectIds.length === 0) return;
+				
+				// For each project, check if the user has already rated it
+				const ratedProjectsMap = {};
+				
+				await Promise.all(uniqueProjectIds.map(async (projectId) => {
+					try {
+						const response = await axiosInstance.get(`/projects/${projectId}/ratings`);
+						const hasUserRated = response.data.some(rating => 
+							rating.sender._id === user._id
+						);
+						
+						ratedProjectsMap[projectId] = hasUserRated;
+					} catch (error) {
+						console.error(`Error checking rating for project ${projectId}:`, error);
+					}
+				}));
+				
+				setUserRatedProjects(ratedProjectsMap);
+			} catch (error) {
+				console.error("Error fetching user ratings:", error);
+			}
+		};
+		
+		if (notifications?.data) {
+			fetchUserRatings();
+		}
+	}, [notifications, user]);
 
     const { mutate: markAsReadMutation } = useMutation({
 		mutationFn: (id) => axiosInstance.put(`/notifications/${id}/read`),
@@ -91,6 +138,12 @@ const NotificationsPage = () => {
 			delete newRatings[projectId];
 			return newRatings;
 		});
+		
+		// Mark this project as rated by the user
+		setUserRatedProjects(prev => ({
+			...prev,
+			[projectId]: true
+		}));
 	};
 
     // render the notifications icon
@@ -192,38 +245,47 @@ const NotificationsPage = () => {
 								<h3 className="font-medium">{notification.relatedProject.name}</h3>
 								<p className="text-sm text-gray-600 mt-1">{notification.relatedProject.description}</p>
 								
-								{/* Rating Component */}
-								<div className="mt-3">
-									<p className="text-sm font-medium mb-1">Rate this project:</p>
-									<div className="flex items-center gap-1">
-										{[1, 2, 3, 4, 5].map((star) => (
+								{/* Rating Component - Only show if user hasn't rated this project yet */}
+								{!userRatedProjects[notification.relatedProject._id] ? (
+									<div className="mt-3">
+										<p className="text-sm font-medium mb-1">Rate this project:</p>
+										<div className="flex items-center gap-1">
+											{[1, 2, 3, 4, 5].map((star) => (
+												<button
+													key={star}
+													className={`text-xl ${star <= (projectRatings[notification.relatedProject._id]?.rating || 0) ? 'text-yellow-500' : 'text-gray-300'}`}
+													onClick={() => handleRateProject(notification.relatedProject._id, star)}
+												>
+													★
+												</button>
+											))}
+										</div>
+										
+										{/* Comment Box */}
+										<div className="mt-2">
+											<textarea
+												className="w-full p-2 border rounded-md text-sm"
+												rows="2"
+												placeholder="Add a comment..."
+												value={projectRatings[notification.relatedProject._id]?.comment || ""}
+												onChange={(e) => handleCommentChange(notification.relatedProject._id, e.target.value)}
+											></textarea>
 											<button
-												key={star}
-												className={`text-xl ${star <= (projectRatings[notification.relatedProject._id]?.rating || 0) ? 'text-yellow-500' : 'text-gray-300'}`}
-												onClick={() => handleRateProject(notification.relatedProject._id, star)}
+												className="mt-1 px-3 py-1 bg-primary text-white text-sm rounded-md hover:bg-primary-dark"
+												onClick={() => handleSubmitRating(notification.relatedProject._id)}
 											>
-												★
+												Submit
 											</button>
-										))}
+										</div>
 									</div>
-									
-									{/* Comment Box */}
-									<div className="mt-2">
-										<textarea
-											className="w-full p-2 border rounded-md text-sm"
-											rows="2"
-											placeholder="Add a comment..."
-											value={projectRatings[notification.relatedProject._id]?.comment || ""}
-											onChange={(e) => handleCommentChange(notification.relatedProject._id, e.target.value)}
-										></textarea>
-										<button
-											className="mt-1 px-3 py-1 bg-primary text-white text-sm rounded-md hover:bg-primary-dark"
-											onClick={() => handleSubmitRating(notification.relatedProject._id)}
-										>
-											Submit
-										</button>
+								) : (
+									<div className="mt-3 p-2 bg-green-50 rounded border border-green-200">
+										<p className="text-sm text-green-700 flex items-center">
+											<Star className="h-4 w-4 mr-1 text-green-500" />
+											You've already rated this project
+										</p>
 									</div>
-								</div>
+								)}
 								
 								<div className="mt-3 flex gap-2">
 									{notification.relatedProject.gitlink && (

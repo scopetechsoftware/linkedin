@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { axiosInstance } from "../../lib/axios";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
-import { Calendar, Trash2, Users, GraduationCap, Building } from "lucide-react";
+import { Calendar, Trash2, Users, GraduationCap, Building, XCircle, CheckCircle } from "lucide-react";
 import Sidebar from "../../components/Sidebar/Sidebar";
 import { format } from "date-fns";
 
@@ -30,16 +31,53 @@ const AffiliationsPage = () => {
         },
         onSuccess: () => {
             toast.success("Affiliation deleted successfully");
+            // Invalidate all affiliation-related queries
             queryClient.invalidateQueries({ queryKey: ["affiliations"] });
+            
+            // Also invalidate any username-specific affiliation queries
+            // This ensures profile pages will refresh with the new data
+            queryClient.invalidateQueries({ queryKey: ["affiliations", user?.username] });
+            queryClient.invalidateQueries({ queryKey: ["userAffiliations"] });
+            queryClient.invalidateQueries({ queryKey: ["userAffiliations", user?.username] });
         },
         onError: (err) => {
             toast.error(err.response?.data?.message || "Failed to delete affiliation");
+        },
+    });
+    
+    // Toggle affiliation active status mutation
+    const { mutate: toggleAffiliationStatus } = useMutation({
+        mutationFn: async ({ affiliationId, isActive }) => {
+            await axiosInstance.put(`/affiliations/${affiliationId}`, { isActive });
+        },
+        onSuccess: () => {
+            // Invalidate all affiliation-related queries
+            queryClient.invalidateQueries({ queryKey: ["affiliations"] });
+            
+            // Also invalidate any username-specific affiliation queries
+            // This ensures profile pages will refresh with the new data
+            queryClient.invalidateQueries({ queryKey: ["affiliations", user?.username] });
+            queryClient.invalidateQueries({ queryKey: ["userAffiliations"] });
+            queryClient.invalidateQueries({ queryKey: ["userAffiliations", user?.username] });
+        },
+        onError: (err) => {
+            toast.error(err.response?.data?.message || "Failed to update affiliation status");
         },
     });
 
     const handleDeleteAffiliation = (affiliationId) => {
         if (window.confirm("Are you sure you want to delete this affiliation?")) {
             deleteAffiliation(affiliationId);
+        }
+    };
+    
+    const handleToggleStatus = (affiliationId, currentStatus) => {
+        const newStatus = !currentStatus;
+        const message = newStatus ? "activate" : "deactivate";
+        
+        if (window.confirm(`Are you sure you want to ${message} this affiliation?`)) {
+            toggleAffiliationStatus({ affiliationId, isActive: newStatus });
+            toast.success(`Affiliation ${message}d successfully`);
         }
     };
 
@@ -90,13 +128,17 @@ const AffiliationsPage = () => {
                         <div key={affiliation._id} className="bg-white rounded-lg shadow p-4">
                             <div className="flex items-start justify-between">
                                 <div className="flex items-center">
-                                    <img
-                                        src={person.profilePicture || "/avatar.png"}
-                                        alt={person.name}
-                                        className="w-12 h-12 rounded-full mr-4"
-                                    />
+                                    <Link to={`/profile/${person.username}`}>
+                                        <img
+                                            src={person.profilePicture || "/avatar.png"}
+                                            alt={person.name}
+                                            className="w-12 h-12 rounded-full mr-4 hover:opacity-90 transition-opacity"
+                                        />
+                                    </Link>
                                     <div>
-                                        <h3 className="font-semibold text-lg">{person.name}</h3>
+                                        <Link to={`/profile/${person.username}`} className="hover:text-primary transition-colors">
+                                            <h3 className="font-semibold text-lg">{person.name}</h3>
+                                        </Link>
                                         <p className="text-gray-600 text-sm">{person.headline || person.email}</p>
                                         <div className="flex items-center mt-1 text-sm text-gray-700">
                                             {getRoleIcon(affiliation.role)}
@@ -111,13 +153,22 @@ const AffiliationsPage = () => {
                                     </div>
                                 </div>
                                 {isCreatedByUser && (
-                                    <button
-                                        onClick={() => handleDeleteAffiliation(affiliation._id)}
-                                        className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-gray-100"
-                                        title="Delete affiliation"
-                                    >
-                                        <Trash2 size={18} />
-                                    </button>
+                                    <div className="flex space-x-2">
+                                        <button
+                                            onClick={() => handleToggleStatus(affiliation._id, affiliation.isActive)}
+                                            className={`${affiliation.isActive ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'} p-1 rounded-full hover:bg-gray-100`}
+                                            title={affiliation.isActive ? "Deactivate affiliation" : "Activate affiliation"}
+                                        >
+                                            {affiliation.isActive ? <XCircle size={18} /> : <CheckCircle size={18} />}
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteAffiliation(affiliation._id)}
+                                            className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-gray-100"
+                                            title="Delete affiliation"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
                                 )}
                             </div>
                         </div>

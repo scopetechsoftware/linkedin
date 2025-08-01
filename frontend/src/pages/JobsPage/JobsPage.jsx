@@ -43,8 +43,9 @@ const JobsPage = () => {
       <div className="space-y-4">
         {data && data.length > 0 ? (
           data.map((job) => (
-            <div key={job._id} className="bg-white rounded-lg shadow p-4 flex flex-col md:flex-row md:items-center md:justify-between">
-              <div>
+            <div key={job._id} className="bg-white rounded-lg shadow p-4 flex flex-col md:flex-row md:items-center md:justify-between relative">
+              <Link to={`/jobs/${job._id}`} className="absolute inset-0 z-0" aria-label={`View details for ${job.title}`}></Link>
+              <div className="relative z-10">
                 <h2 className="text-lg font-semibold mb-1">{job.title}</h2>
                 <div className="flex items-center text-gray-600 text-sm mb-1">
                   <Briefcase className="mr-1" size={16} />
@@ -60,7 +61,7 @@ const JobsPage = () => {
                   Out: {new Date(job.outDate).toLocaleDateString()}
                 </div>
               </div>
-              <Link to={`/jobs/${job._id}`} className="mt-2 md:mt-0 bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark text-center">View Details</Link>
+              <Link to={`/jobs/${job._id}`} className="mt-2 md:mt-0 bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark text-center inline-block relative z-10">View Details</Link>
             </div>
           ))
         ) : (

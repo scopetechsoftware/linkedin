@@ -1,0 +1,76 @@
+.medal-container {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.medal-image {
+  width: 3rem;
+  height: 3rem;
+  transition: all 0.3s ease;
+  filter: drop-shadow(0 4px 3px rgba(0, 0, 0, 0.1));
+}
+
+.medal-image:hover {
+  transform: scale(1.15);
+  filter: drop-shadow(0 10px 8px rgba(0, 0, 0, 0.2));
+}
+
+.medal-tooltip {
+  position: absolute;
+  bottom: -2.5rem;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 10;
+}
+
+.medal-container:hover .medal-tooltip {
+  opacity: 1;
+}
+
+.medal-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-top: 0.25rem;
+}
+
+.badge-bronze {
+  background-color: #cd7f32;
+  color: white;
+}
+
+.badge-silver {
+  background-color: #c0c0c0;
+  
+  color: white;
+}
+
+.badge-gold {
+  background-color: #0e0d0d;
+  color: #333;
+}
+
+/* Animation for new medal achievement */
+@keyframes medalPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+.new-medal {
+  animation: medalPulse 1.5s ease-in-out infinite;
+}

@@ -176,7 +176,7 @@ const ProfileHeader = ({ userData, onSave, isOwnProfile }) => {
 				<div
 					className='relative h-48 rounded-t-lg bg-cover bg-center'
 					style={{
-						backgroundImage: `url('${editedData.bannerImgPreview || userData.bannerImg || "/banner.png"}')`,
+						backgroundImage: `url('${editedData.bannerImgPreview || (userData.bannerImg ? `http://localhost:5000/uploads/${userData.bannerImg}` : "/banner.png")}')`,
 					}}
 				>
 				{isEditing && (
@@ -197,7 +197,7 @@ const ProfileHeader = ({ userData, onSave, isOwnProfile }) => {
 				<div className='relative -mt-20 mb-4'>
 					<img
 						className='w-32 h-32 rounded-full mx-auto object-cover'
-						src={editedData.profilePicturePreview || userData.profilePicture || "/avatar.png"}
+						src={editedData.profilePicturePreview || (userData.profilePicture ? `http://localhost:5000/uploads/${userData.profilePicture}` : "/avatar.png")}
 						alt={userData.name}
 					/>
 
@@ -220,7 +220,15 @@ const ProfileHeader = ({ userData, onSave, isOwnProfile }) => {
 						<input
 							type='text'
 							value={editedData.name ?? userData.name}
-							onChange={(e) => setEditedData({ ...editedData, name: e.target.value })}
+							onChange={(e) => {
+								// Allow editing but prevent completely empty values
+								if (e.target.value === '') {
+									// Reset to original value instead of blocking the update
+									setEditedData({ ...editedData, name: userData.name });
+									return;
+								}
+								setEditedData({ ...editedData, name: e.target.value })
+							}}
 							className='text-2xl font-bold mb-2 text-center w-full'
 						/>
 					) : (
@@ -231,7 +239,15 @@ const ProfileHeader = ({ userData, onSave, isOwnProfile }) => {
 						<input
 							type='text'
 							value={editedData.headline ?? userData.headline}
-							onChange={(e) => setEditedData({ ...editedData, headline: e.target.value })}
+							onChange={(e) => {
+								// Allow editing but prevent completely empty values
+								if (e.target.value === '') {
+									// Reset to original value instead of blocking the update
+									setEditedData({ ...editedData, headline: userData.headline });
+									return;
+								}
+								setEditedData({ ...editedData, headline: e.target.value })
+							}}
 							className='text-gray-600 text-center w-full'
 						/>
 					) : (
@@ -244,7 +260,15 @@ const ProfileHeader = ({ userData, onSave, isOwnProfile }) => {
 							<input
 								type='text'
 								value={editedData.location ?? userData.location}
-								onChange={(e) => setEditedData({ ...editedData, location: e.target.value })}
+								onChange={(e) => {
+									// Allow editing but prevent completely empty values
+									if (e.target.value === '') {
+										// Reset to original value instead of blocking the update
+										setEditedData({ ...editedData, location: userData.location });
+										return;
+									}
+									setEditedData({ ...editedData, location: e.target.value })
+								}}
 								className='text-gray-600 text-center'
 							/>
 						) : (

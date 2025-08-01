@@ -1,16 +1,18 @@
 import { Link } from "react-router-dom";
-import { Home, UserPlus, Bell, Briefcase, Users, GraduationCap, Building, Share2 } from "lucide-react";
+import { Home, UserPlus, Bell, Briefcase, Users, GraduationCap, Building, Share2, Award } from "lucide-react";
 import { useState } from "react";
 import AffiliationForm from "../AffiliationForm/AffiliationForm";
 import JobPostingForm from "../JobPostingForm/JobPostingForm";
 import { useEffect } from "react";
 import { axiosInstance } from "../../lib/axios";
+import MedalDisplay from "../MedalDisplay/MedalDisplay";
 
 
 export default function Sidebar({ user }) {
 	const [isAffiliationFormOpen, setIsAffiliationFormOpen] = useState(false);
 	const [isJobPostingFormOpen, setIsJobPostingFormOpen] = useState(false);
 	const [averageRating, setAverageRating] = useState(null);
+	const [previousRating, setPreviousRating] = useState(null);
 
 	useEffect(() => {
 		const fetchAverageRating = async () => {
@@ -18,6 +20,9 @@ export default function Sidebar({ user }) {
 				const res = await axiosInstance.get("/projects/my/average-rating");
 
 				console.log("Fetched average rating:", res.data); // for debugging
+				
+				// Store previous rating to check if medal changed
+				setPreviousRating(averageRating);
 				setAverageRating(res.data.average);
 			} catch (err) {
 				console.error("Failed to fetch average rating", err);
@@ -45,24 +50,37 @@ export default function Sidebar({ user }) {
 				<div
 					className='h-16 rounded-t-lg bg-cover bg-center'
 					style={{
-						backgroundImage: `url("${user.bannerImg || "/banner.png"}")`,
+						backgroundImage: `url("${user.bannerImg ? `http://localhost:5000/uploads/${user.bannerImg}` : "/banner.png"}")`,
 					}}
 				/>
 				<Link to={`/profile/${user.username}`}>
 					<img
-						src={user.profilePicture || "/avatar.png"}
-						alt={user.name}
-						className='w-20 h-20 rounded-full mx-auto mt-[-40px]'
-					/>
+					src={user.profilePicture ? `http://localhost:5000/uploads/${user.profilePicture}` : "/avatar.png"}
+					alt={user.name}
+					className='w-20 h-20 rounded-full mx-auto mt-[-40px]'
+				/>
 					<h2 className='text-xl font-semibold mt-2'>{user.name}</h2>
 				</Link>
 				<p className='text-info'>{user.headline}</p>
+				
+				{/* User Role with Icon */}
+				<div className='flex items-center justify-center mt-2 mb-1'>
+					<Award className='text-primary mr-1' size={16} />
+					<span className='text-sm font-medium capitalize'>{user.role}</span>
+				</div>
+				
 				<p className='text-info text-xs'>{user.connections.length} connections</p>
-				{averageRating !== null && averageRating !== undefined && averageRating !== "" && (
-	<p className='text-warning text-xs mt-1'>
-		⭐ Average Project Rating: <strong>{averageRating}</strong>/5
-	</p>
-)}
+				
+				{/* User Role with Medal Display */}
+				<div className='mt-2'>
+					{/* Medal Display Component */}
+					<MedalDisplay 
+						rating={averageRating} 
+						previousRating={previousRating} 
+						className="mt-2" 
+						user={user}
+					/>
+				</div>
 
 
 

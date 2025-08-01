@@ -72,18 +72,63 @@ const SettingsPage = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    
+    // Update the form data with the new value
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+    
+    // We'll validate empty fields on submit instead of during typing
+    // This allows users to freely edit, including erasing the first letter
   };
 
   const handleArrayInputChange = (field, index, key, value) => {
+    // Allow editing but prevent completely empty values for important fields
+    if (value === '' && (key === 'title' || key === 'company' || key === 'degree' || key === 'school')) {
+      // For empty values in important fields, get the original value if available
+      const originalArray = authUser?.[field] || [];
+      const originalValue = originalArray[index]?.[key] || '';
+      
+      // Instead of forcing the original value, we'll allow empty string but keep the object structure
+      setFormData(prev => {
+        // Create a deep copy of the array to avoid modifying frozen objects
+        const newArray = (prev[field] || (authUser?.[field] || [])).map(item => 
+          item ? {...item} : {}
+        );
+        
+        // Ensure the index exists
+        if (!newArray[index]) {
+          newArray[index] = {};
+        } else {
+          // Make sure we're working with a fresh copy
+          newArray[index] = {...newArray[index]};
+        }
+        
+        // Allow empty string but preserve the field
+        newArray[index][key] = value;
+        return {
+          ...prev,
+          [field]: newArray
+        };
+      });
+      return;
+    }
+    
     setFormData(prev => {
-      const newArray = [...(prev[field] || (authUser?.[field] || []))];
+      // Create a deep copy of the array to avoid modifying frozen objects
+      const newArray = (prev[field] || (authUser?.[field] || [])).map(item => 
+        item ? {...item} : {}
+      );
+      
+      // Ensure the index exists
       if (!newArray[index]) {
         newArray[index] = {};
+      } else {
+        // Make sure we're working with a fresh copy
+        newArray[index] = {...newArray[index]};
       }
+      
       newArray[index][key] = value;
       return {
         ...prev,
@@ -94,7 +139,12 @@ const SettingsPage = () => {
 
   const addArrayItem = (field, template) => {
     setFormData(prev => {
-      const newArray = [...(prev[field] || (authUser?.[field] || [])), template];
+      // Create a deep copy of the array to avoid modifying frozen objects
+      const newArray = (prev[field] || (authUser?.[field] || [])).map(item => 
+        item ? {...item} : {}
+      );
+      // Add the new template item
+      newArray.push({...template});
       return {
         ...prev,
         [field]: newArray
@@ -104,7 +154,10 @@ const SettingsPage = () => {
 
   const removeArrayItem = (field, index) => {
     setFormData(prev => {
-      const newArray = [...(prev[field] || (authUser?.[field] || []))];
+      // Create a deep copy of the array to avoid modifying frozen objects
+      const newArray = (prev[field] || (authUser?.[field] || [])).map(item => 
+        item ? {...item} : {}
+      );
       newArray.splice(index, 1);
       return {
         ...prev,
@@ -115,7 +168,69 @@ const SettingsPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    updateProfile(formData);
+    
+    // Validate required fields
+    const updatedData = {...formData};
+    
+    // Check for empty required fields and use original values if empty
+    const requiredFields = ['username', 'headline', 'role'];
+    let hasEmptyRequiredField = false;
+    
+    requiredFields.forEach(field => {
+      // Check if the field is empty in formData
+      if (updatedData[field] === '') {
+        if (authUser[field]) {
+          // Use original value if available
+          updatedData[field] = authUser[field];
+          // Update formData to show the original value in the UI
+          setFormData(prev => ({
+            ...prev,
+            [field]: authUser[field]
+          }));
+        } else {
+          hasEmptyRequiredField = true;
+        }
+      }
+      
+      // Ensure field exists by using original value if not in formData
+      if (!updatedData[field] && authUser[field]) {
+        updatedData[field] = authUser[field];
+      }
+    });
+    
+    if (hasEmptyRequiredField) {
+      toast.error('Username, headline, and role cannot be empty');
+      return;
+    }
+    
+    // Validate experience and education arrays
+    if (updatedData.experience) {
+      // Create a deep copy and filter out experience items with empty required fields
+      updatedData.experience = updatedData.experience
+        .map(exp => exp ? {...exp} : {})
+        .filter(exp => 
+          exp && 
+          typeof exp.title === 'string' && 
+          typeof exp.company === 'string' && 
+          exp.title.trim() !== '' && 
+          exp.company.trim() !== ''
+        );
+    }
+    
+    if (updatedData.education) {
+      // Create a deep copy and filter out education items with empty required fields
+      updatedData.education = updatedData.education
+        .map(edu => edu ? {...edu} : {})
+        .filter(edu => 
+          edu && 
+          typeof edu.school === 'string' && 
+          typeof edu.degree === 'string' && 
+          edu.school.trim() !== '' && 
+          edu.degree.trim() !== ''
+        );
+    }
+    
+    updateProfile(updatedData);
   };
 
   if (isLoading) {
@@ -126,8 +241,8 @@ const SettingsPage = () => {
   const userData = {
     ...authUser,
     ...formData,
-    profilePicture: formData.profilePicturePreview || authUser.profilePicture,
-    bannerImg: formData.bannerImgPreview || authUser.bannerImg
+    profilePicture: formData.profilePicturePreview || (authUser.profilePicture ? `http://localhost:5000/uploads/${authUser.profilePicture}` : "/avatar.png"),
+    bannerImg: formData.bannerImgPreview || (authUser.bannerImg ? `http://localhost:5000/uploads/${authUser.bannerImg}` : "/banner.png")
   };
 
   return (
@@ -147,7 +262,6 @@ const SettingsPage = () => {
               className="hidden"
               name="bannerImg"
               onChange={handleImageChange}
-              accept="image/*"
             />
           </label>
           
@@ -165,7 +279,6 @@ const SettingsPage = () => {
                   className="hidden"
                   name="profilePicture"
                   onChange={handleImageChange}
-                  accept="image/*"
                 />
               </label>
             </div>
@@ -219,7 +332,7 @@ const SettingsPage = () => {
                   <input
                     type="text"
                     name="name"
-                    value={formData.name || authUser.name || ''}
+                    value={formData.name !== undefined ? formData.name : (authUser.name || '')}
                     onChange={handleInputChange}
                     className="w-full p-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary"
                   />
@@ -230,10 +343,34 @@ const SettingsPage = () => {
                   <input
                     type="text"
                     name="username"
-                    value={formData.username || authUser.username || ''}
+                    value={formData.username !== undefined ? formData.username : (authUser.username || '')}
                     onChange={handleInputChange}
                     className="w-full p-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary"
                   />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                  <select
+                    name="role"
+                    value={formData.role !== undefined ? formData.role : (authUser.role || '')}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary"
+                  >
+                    <option value="" disabled>Select your role</option>
+                    <option value="student">Student</option>
+                    <option value="employee">Employee</option>
+                    <option value="employer">Employer</option>
+                    <option value="company">Company</option>
+                    <option value="university">University</option>
+                    <option value="freelancer">Freelancer</option>
+                    <option value="professor">Professor</option>
+                  </select>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Your role determines what features are available to you on the platform.
+                  </p>
                 </div>
               </div>
 
@@ -242,7 +379,7 @@ const SettingsPage = () => {
                 <input
                   type="text"
                   name="headline"
-                  value={formData.headline || authUser.headline || ''}
+                  value={formData.headline !== undefined ? formData.headline : (authUser.headline || '')}
                   onChange={handleInputChange}
                   className="w-full p-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary"
                   placeholder="Your professional headline"
@@ -256,7 +393,7 @@ const SettingsPage = () => {
                   <input
                     type="text"
                     name="location"
-                    value={formData.hasOwnProperty('location') ? formData.location : (authUser.location || '')}
+                    value={formData.location !== undefined ? formData.location : (authUser.location || '')}
                     onChange={handleInputChange}
                     className="w-full p-2 pl-10 border border-gray-300 rounded-md focus:ring-primary focus:border-primary"
                     placeholder="City, Country"
@@ -268,7 +405,7 @@ const SettingsPage = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">About</label>
                 <textarea
                   name="about"
-                  value={formData.about || authUser.about || ''}
+                  value={formData.about !== undefined ? formData.about : (authUser.about || '')}
                   onChange={handleInputChange}
                   rows="4"
                   className="w-full p-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary"
@@ -365,7 +502,7 @@ const SettingsPage = () => {
                 </button>
               </div>
               
-              {(formData.experience || authUser.experience || []).map((exp, index) => (
+              {(formData.experience || authUser.experience || []).map((exp, index) => exp && (
                 <div key={index} className="border rounded-lg p-4 space-y-4">
                   <div className="flex justify-between">
                     <h3 className="font-medium">Experience #{index + 1}</h3>
@@ -464,7 +601,7 @@ const SettingsPage = () => {
                 </button>
               </div>
               
-              {(formData.education || authUser.education || []).map((edu, index) => (
+              {(formData.education || authUser.education || []).map((edu, index) => edu && (
                 <div key={index} className="border rounded-lg p-4 space-y-4">
                   <div className="flex justify-between">
                     <h3 className="font-medium">Education #{index + 1}</h3>
@@ -562,6 +699,15 @@ const SettingsPage = () => {
                   name="skills"
                   value={formData.skills || (authUser.skills ? authUser.skills.join(', ') : '')}
                   onChange={(e) => {
+                    // If the value is completely empty, use the original skills
+                    if (e.target.value === '') {
+                      setFormData(prev => ({
+                        ...prev,
+                        skills: authUser.skills || []
+                      }));
+                      return;
+                    }
+                    
                     const skillsArray = e.target.value.split(',').map(skill => skill.trim()).filter(Boolean);
                     setFormData(prev => ({
                       ...prev,

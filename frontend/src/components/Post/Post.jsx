@@ -8,19 +8,19 @@ import { Loader, MessageCircle, Send, Share2, ThumbsUp, Trash2 } from "lucide-re
 import PostAction from "../PostAction/PostAction";
 
 const Post = ({ post }) => {
-    const { postId } = useParams();
-    const { data: authUser } = useQuery({ queryKey: ["authUser"] });
+	const { postId } = useParams();
+	const { data: authUser } = useQuery({ queryKey: ["authUser"] });
 
-    const [showComments, setShowComments] = useState(false);
+	const [showComments, setShowComments] = useState(false);
 	const [newComment, setNewComment] = useState("");
 	const [comments, setComments] = useState(post.comments || []);
 
-    const isOwner = authUser._id === post.author._id;
+	const isOwner = authUser._id === post.author._id;
 	const isLiked = post.likes.includes(authUser._id);
 
-    const queryClient = useQueryClient();
+	const queryClient = useQueryClient();
 
-    const { mutate: deletePost, isPending: isDeletingPost } = useMutation({
+	const { mutate: deletePost, isPending: isDeletingPost } = useMutation({
 		mutationFn: async () => {
 			await axiosInstance.delete(`/posts/delete/${post._id}`);
 		},
@@ -33,7 +33,7 @@ const Post = ({ post }) => {
 		},
 	});
 
-    const { mutate: createComment, isPending: isAddingComment } = useMutation({
+	const { mutate: createComment, isPending: isAddingComment } = useMutation({
 		mutationFn: async (newComment) => {
 			await axiosInstance.post(`/posts/${post._id}/comment`, { content: newComment });
 		},
@@ -52,21 +52,21 @@ const Post = ({ post }) => {
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["posts"] });
-            queryClient.invalidateQueries({ queryKey: ["post", postId] });
+			queryClient.invalidateQueries({ queryKey: ["post", postId] });
 		},
 	});
 
-    const handleDeletePost = () => {
+	const handleDeletePost = () => {
 		if (!window.confirm("Are you sure you want to delete this post?")) return;
 		deletePost();
 	};
 
-    const handleLikePost = async () => {
+	const handleLikePost = async () => {
 		if (isLikingPost) return;
 		likePost();
 	};
 
-    const handleAddComment = async (e) => {
+	const handleAddComment = async (e) => {
 		e.preventDefault();
 		if (newComment.trim()) {
 			createComment(newComment);
@@ -85,18 +85,20 @@ const Post = ({ post }) => {
 			]);
 		}
 	};
-    return (
-        <div className="bg-secondary rounded-lg shadow mb-4">
-            <div className="p-4">
-                <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center">
-                        <Link to={`/profile/${post?.author?.username}`}>
+	return (
+		<div className="bg-secondary rounded-lg shadow mb-4">
+			<div className="p-4">
+				<div className="flex items-center justify-between mb-4">
+					<div className="flex items-center">
+
+						<Link to={`/profile/${post?.author?.username}`}>
 							<img
-								src={post.author.profilePicture || "/avatar.png"}
+								src={post.author.profilePicture ? `http://localhost:5000/uploads/${post.author.profilePicture}` : "/avatar.png"}
 								alt={post.author.name}
 								className='size-10 rounded-full mr-3'
 							/>
 						</Link>
+
 
 						<div>
 							<Link to={`/profile/${post?.author?.username}`}>
@@ -107,41 +109,43 @@ const Post = ({ post }) => {
 								{formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
 							</p>
 						</div>
-                    </div>
-                    {isOwner && (
+					</div>
+					{isOwner && (
 						<button onClick={handleDeletePost} className='text-red-500 hover:text-red-700'>
 							{isDeletingPost ? <Loader size={18} className='animate-spin' /> : <Trash2 size={18} />}
 						</button>
 					)}
-                </div>
-                <p className='mb-4'>{post.content}</p>
+				</div>
+				<p className='mb-4'>{post.content}</p>
 				{post.image && <img src={post.image} alt='Post content' className='rounded-lg w-full mb-4' />}
 
-                <div className="flex justify-between text-info">
-                    <PostAction
+				<div className="flex justify-between text-info">
+					<PostAction
 						icon={<ThumbsUp size={18} className={isLiked ? "text-blue-500  fill-blue-300" : ""} />}
 						text={`Like (${post.likes.length})`}
 						onClick={handleLikePost}
 					/>
 
-                    <PostAction
+					<PostAction
 						icon={<MessageCircle size={18} />}
 						text={`Comment (${comments.length})`}
 						onClick={() => setShowComments(!showComments)}
 					/>
 					<PostAction icon={<Share2 size={18} />} text='Share' />
-                </div>
-            </div>
-            {showComments && (
+				</div>
+			</div>
+			{showComments && (
 				<div className='px-4 pb-4'>
 					<div className='mb-4 max-h-60 overflow-y-auto'>
 						{comments.map((comment) => (
 							<div key={comment._id} className='mb-2 bg-base-100 p-2 rounded flex items-start'>
+								// ... existing code ...
 								<img
-									src={comment.user.profilePicture || "/avatar.png"}
+									src={comment.user.profilePicture ? `http://localhost:5000/uploads/${comment.user.profilePicture}` : "/avatar.png"}
 									alt={comment.user.name}
 									className='w-8 h-8 rounded-full mr-2 flex-shrink-0'
 								/>
+// ... existing code ...
 								<div className='flex-grow'>
 									<div className='flex items-center mb-1'>
 										<span className='font-semibold mr-2'>{comment.user.name}</span>
@@ -174,8 +178,8 @@ const Post = ({ post }) => {
 					</form>
 				</div>
 			)}
-        </div>
-    )
+		</div>
+	)
 }
 
 export default Post

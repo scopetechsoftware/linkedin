@@ -13,6 +13,7 @@ export const useSocket = () => {
 export const SocketProvider = ({ children }) => {
     const [socket, setSocket] = useState(null);
     const [isConnected, setIsConnected] = useState(false);
+    const [lastSharedProject, setLastSharedProject] = useState(null);
     const authUser = useRecoilValue(authUserState);
 
     useEffect(() => {
@@ -42,6 +43,12 @@ export const SocketProvider = ({ children }) => {
                 setIsConnected(false);
             });
 
+            // Listen for project_shared events
+            newSocket.on("project_shared", (data) => {
+                console.log("Received project_shared event:", data);
+                setLastSharedProject(data);
+            });
+
             setSocket(newSocket);
         }
 
@@ -55,7 +62,7 @@ export const SocketProvider = ({ children }) => {
     }, [authUser?._id]);
 
     return (
-        <SocketContext.Provider value={{ socket, isConnected }}>
+        <SocketContext.Provider value={{ socket, isConnected, lastSharedProject }}>
             {children}
         </SocketContext.Provider>
     );

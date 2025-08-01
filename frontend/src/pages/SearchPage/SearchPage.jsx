@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Search, Users, Briefcase, FileText, Building, MapPin } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { axiosInstance } from '../../lib/axios';
 import UserCard from '../../components/UserCard/UserCard';
 import ErrorBoundary from '../../components/ErrorBoundary/ErrorBoundary';
@@ -63,24 +64,26 @@ const SearchPageContent = () => {
                 return (
                     <div className="space-y-4">
                         {searchResults.map(job => (
-                            <div key={job._id} className="p-4 border rounded-lg hover:bg-gray-50">
-                                <h3 className="font-semibold text-lg">{job.title}</h3>
-                                <p className="text-gray-600">{job.company}</p>
-                                <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
-                                    <span className="flex items-center gap-1">
-                                        <MapPin size={16} />
-                                        {job.location}
-                                    </span>
-                                    <span className="flex items-center gap-1">
-                                        <Briefcase size={16} />
-                                        {job.type}
-                                    </span>
+                            <Link to={`/jobs/${job._id}`} key={job._id} className="block">
+                                <div className="p-4 border rounded-lg hover:bg-gray-50 transition cursor-pointer">
+                                    <h3 className="font-semibold text-lg text-primary">{job.title}</h3>
+                                    <p className="text-gray-600">{job.company}</p>
+                                    <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                                        <span className="flex items-center gap-1">
+                                            <MapPin size={16} />
+                                            {job.location}
+                                        </span>
+                                        <span className="flex items-center gap-1">
+                                            <Briefcase size={16} />
+                                            {job.type}
+                                        </span>
+                                    </div>
+                                    <div className="mt-2 flex flex-wrap gap-2">
+                                        {job.skill && <span className="px-2 py-1 bg-gray-100 text-gray-600 text-sm rounded">{job.skill}</span>}
+                                        {job.technology && <span className="px-2 py-1 bg-gray-100 text-gray-600 text-sm rounded">{job.technology}</span>}
+                                    </div>
                                 </div>
-                                <div className="mt-2 flex flex-wrap gap-2">
-                                    {job.skill && <span className="px-2 py-1 bg-gray-100 text-gray-600 text-sm rounded">{job.skill}</span>}
-                                    {job.technology && <span className="px-2 py-1 bg-gray-100 text-gray-600 text-sm rounded">{job.technology}</span>}
-                                </div>
-                            </div>
+                            </Link>
                         ))}
                     </div>
                 );

@@ -39,10 +39,6 @@ const ProjectsPage = () => {
     const [isSending, setIsSending] = useState(false);
     const { socket } = useSocket();
 
-    
-  const [files, setFiles] = useState([]);
- 
-
     // Listen for project_shared event
     React.useEffect(() => {
         if (!socket) return;
@@ -94,6 +90,37 @@ const ProjectsPage = () => {
         });
     };
 
+    // Fallback function to share project using REST API when socket is not available
+    const handleShareWithRestApi = async () => {
+        if (!shareProjectId || selectedShareUsers.length === 0) {
+            toast.error("Please select a project and at least one user");
+            return;
+        }
+
+        setIsSending(true);
+        try {
+            // Make API call to share project
+            const response = await axios.post(
+                `${import.meta.env.VITE_API_BASE_URL}/api/projects/${shareProjectId}/share`,
+                { userIds: selectedShareUsers.map(user => user._id) },
+                { headers: { Authorization: `Bearer ${authUser.token}` } }
+            );
+
+            if (response.status === 200) {
+                toast.success("Project shared successfully");
+                setSelectedShareUsers([]);
+                setShowShareModal(false);
+            } else {
+                toast.error("Failed to share project");
+            }
+        } catch (error) {
+            console.error("Error sharing project via REST API:", error);
+            toast.error(error.response?.data?.message || "Failed to share project");
+        } finally {
+            setIsSending(false);
+        }
+    };
+
     // Send project to selected users via socket
     const handleSendShare = () => {
         console.log("handleSendShare called", {
@@ -108,17 +135,23 @@ const ProjectsPage = () => {
         if (socket) {
             console.log("Current socket listeners:", socket._callbacks);
         }
+        
+        // Check if socket exists
         if (!socket) {
-            console.error("Socket not connected - socket object is null");
-            toast.error("Socket not connected");
+            // Use REST API fallback if socket is not available
+            handleShareWithRestApi();
             return;
         }
+        
+        // Check if socket is connected
         if (!socket.connected) {
-            // Try to reconnect the socket without JWT token
+            // Try to reconnect the socket
             socket.connect();
+            
+            // If still not connected, use REST API fallback
             if (!socket.connected) {
-                console.error("Socket exists but is not connected to server");
-                toast.error("Socket not connected to server");
+                console.log("Socket exists but is not connected to server, using REST API fallback");
+                handleShareWithRestApi();
                 return;
             }
         }
@@ -179,7 +212,8 @@ const ProjectsPage = () => {
                 setIsSending(false);
                 socket.off("project_share_success", handleShareSuccess);
                 socket.off("error", handleShareError);
-                toast.error("Sharing timed out. Please try again.");
+                console.log("Socket sharing timed out, using REST API fallback");
+                handleShareWithRestApi();
             }
         }, 10000); // 10 second timeout
     };
@@ -214,21 +248,27 @@ const ProjectsPage = () => {
             formData.append('gitlink', projectData.gitlink);
             formData.append('projecturl', projectData.projecturl);
             formData.append('type', projectData.type);
+            // formData.append('files', file);
 
             // Add collaborators as JSON string
-            for (let i = 0; i < files.length; i++) {
-                formData.append("files", files[i]); // ✅ name matches multer.array('files')
+            if (projectData.collaborators && projectData.collaborators.length > 0) {
+                formData.append('collaborators', JSON.stringify(projectData.collaborators));
             }
+
             // Add files to FormData
-            files.forEach((file) => {
-    formData.append("files", file);
-  });
+            if (projectData.files && projectData.files.length > 0) {
+                for (let i = 0; i < projectData.files.length; i++) {
+                  formData.append('files', projectData.files[i]);
+                }
+              }
 
             const res = await axiosInstance.post("/projects", formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
             });
+
+
             return res.data;
         },
         onSuccess: () => {
@@ -377,11 +417,14 @@ const ProjectsPage = () => {
                                         type="file"
                                         name="files"
                                         multiple
-                                       onChange={(e) => setFiles(Array.from(e.target.files))}
+                                        className="w-full p-2 border rounded"
+                                        onChange={e => {
+                                            const files = Array.from(e.target.files);
+                                            setProjectData({ ...projectData, files: files });
+                                        }}
                                     />
-
                                     <small className="text-gray-500 mt-1 block">
-                                        Supported file types: Images, Documents, Code files, Media files
+                                        All file types are supported
                                     </small>
                                 </div>
 
@@ -495,7 +538,7 @@ const ProjectsPage = () => {
                                                 </button>
                                                 {/* Share Modal */}
                                                 {showShareModal && (
-                                                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                                                  <div className="fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center z-50">
                                                         <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto relative">
                                                             <button onClick={() => { setShowShareModal(false); setSelectedShareUsers([]); }} className="absolute top-2 right-2 text-gray-500 hover:text-gray-700">&times;</button>
                                                             <h2 className="text-xl font-bold mb-4">Share Project</h2>
@@ -530,10 +573,10 @@ const ProjectsPage = () => {
                                                             </ul>
                                                             <button
                                                                 className="w-full bg-primary text-white py-2 rounded hover:bg-primary-dark disabled:opacity-50"
-                                                                disabled={selectedShareUsers.length === 0 || !socket || !socket?.connected || isSending}
+                                                                disabled={selectedShareUsers.length === 0 || isSending}
                                                                 onClick={handleSendShare}
                                                             >
-                                                                {isSending ? "Sending..." : !socket ? "Socket Not Available" : !socket.connected ? "Socket Not Connected" : "Send"}
+                                                                {isSending ? "Sending..." : "Share Project"}
                                                             </button>
                                                         </div>
                                                     </div>
@@ -614,4 +657,4 @@ const ProjectsPage = () => {
     );
 };
 
-export default ProjectsPage;
+export default ProjectsPage

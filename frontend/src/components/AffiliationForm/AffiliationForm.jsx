@@ -36,7 +36,20 @@ const AffiliationForm = ({ isOpen, onClose, userRole }) => {
         },
         onSuccess: () => {
             toast.success("Affiliation created successfully");
+            // Invalidate all affiliation-related queries
             queryClient.invalidateQueries({ queryKey: ["affiliations"] });
+            
+            // Also invalidate any username-specific affiliation queries
+            // This ensures profile pages will refresh with the new data
+            queryClient.invalidateQueries({ queryKey: ["userAffiliations"] });
+            
+            // Get the current user to invalidate their specific queries
+            const authUser = queryClient.getQueryData(["authUser"]);
+            if (authUser?.username) {
+                queryClient.invalidateQueries({ queryKey: ["affiliations", authUser.username] });
+                queryClient.invalidateQueries({ queryKey: ["userAffiliations", authUser.username] });
+            }
+            
             resetForm();
             onClose();
         },
@@ -114,7 +127,7 @@ const AffiliationForm = ({ isOpen, onClose, userRole }) => {
                                         className="p-2 hover:bg-gray-100 cursor-pointer flex items-center"
                                     >
                                         <img 
-                                            src={user.profilePicture || "/avatar.png"} 
+                                            src={user.profilePicture ? `http://localhost:5000/uploads/${user.profilePicture}` : "/avatar.png"} 
                                             alt={user.name} 
                                             className="w-8 h-8 rounded-full mr-2"
                                         />

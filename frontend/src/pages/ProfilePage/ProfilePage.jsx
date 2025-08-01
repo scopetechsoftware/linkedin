@@ -1,7 +1,5 @@
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-
-
 import toast from "react-hot-toast";
 import { axiosInstance } from "../../lib/axios";
 import ProfileHeader from "../../components/ProfileHeader/ProfileHeader";
@@ -9,7 +7,9 @@ import AboutSection from "../../components/AboutSection/AboutSection";
 import ExperienceSection from "../../components/ExperienceSection/ExperienceSection";
 import EducationSection from "../../components/EducationSection/EducationSection";
 import SkillsSection from "../../components/SkillsSection/SkillsSection";
-import { Calendar, Users, GraduationCap, Building } from "lucide-react";
+import ProjectsSection from "../../components/ProjectsSection/ProjectsSection";
+import RatingsSection from "../../components/RatingsSection/RatingsSection";
+import { Calendar, Users, GraduationCap, Building, XCircle, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 
 const ProfilePage = () => {
@@ -68,6 +68,8 @@ const ProfilePage = () => {
 		updateProfile(updatedData);
 	};
 
+	
+
 	return (
 		<div className='max-w-4xl mx-auto p-4'>
 			<ProfileHeader userData={userData} isOwnProfile={isOwnProfile} onSave={handleSave} />
@@ -117,6 +119,7 @@ const ProfilePage = () => {
 							<h2 className="text-xl font-bold mb-4">Affiliations</h2>
 							<div className="space-y-4">
 								{[...userAffiliations.data]
+									.filter(affiliation => isOwnProfile ? true : affiliation.isActive) // Show all affiliations for own profile
 									.sort((a, b) => new Date(b.startDate) - new Date(a.startDate))
 									.map((affiliation) => {
 										const org = affiliation.affiliator;
@@ -137,27 +140,54 @@ const ProfilePage = () => {
 											return format(new Date(dateString), "MMM yyyy");
 										};
 										return (
-											<div key={affiliation._id} className="bg-gray-50 rounded-lg shadow p-4">
-												<div className="flex items-center">
-													<img
-														src={org.profilePicture || "/avatar.png"}
-														alt={org.name}
-														className="w-12 h-12 rounded-full mr-4"
-													/>
-													<div>
-														<h3 className="font-semibold text-lg">{org.name}</h3>
-														<p className="text-gray-600 text-sm">{org.headline || org.email}</p>
-														<div className="flex items-center mt-1 text-sm text-gray-700">
-															{getRoleIcon(affiliation.role)}
-															<span className="capitalize">{affiliation.role}</span>
-														</div>
-														<div className="flex items-center mt-1 text-sm text-gray-700">
-															<Calendar className="mr-2" size={16} />
-															<span>
-																{formatDate(affiliation.startDate)} - {formatDate(affiliation.endDate)}
-															</span>
+											<div key={affiliation._id} className={`bg-gray-50 rounded-lg shadow p-4 ${!affiliation.isActive && isOwnProfile ? 'opacity-70' : ''}`}>
+												<div className="flex items-start justify-between">
+													<div className="flex items-center">
+														<Link to={`/profile/${org.username}`}>
+															<img
+																src={org.profilePicture || "/avatar.png"}
+																alt={org.name}
+																className="w-12 h-12 rounded-full mr-4 hover:opacity-90 transition-opacity"
+															/>
+														</Link>
+														<div>
+															<Link to={`/profile/${org.username}`} className="hover:text-primary transition-colors">
+																<h3 className="font-semibold text-lg">{org.name}</h3>
+															</Link>
+															<p className="text-gray-600 text-sm">{org.headline || org.email}</p>
+															<div className="flex items-center mt-1 text-sm text-gray-700">
+																{getRoleIcon(affiliation.role)}
+																<span className="capitalize">{affiliation.role}</span>
+															</div>
+															<div className="flex items-center mt-1 text-sm text-gray-700">
+																<Calendar className="mr-2" size={16} />
+																<span>
+																	{formatDate(affiliation.startDate)} - {formatDate(affiliation.endDate)}
+																</span>
+															</div>
+															{isOwnProfile && !affiliation.isActive && (
+																<div className="flex items-center mt-1 text-sm text-red-500">
+																	<XCircle className="mr-2" size={16} />
+																	<span>Deactivated</span>
+																</div>
+															)}
 														</div>
 													</div>
+													{isOwnProfile && (
+														<div className="flex-shrink-0">
+															{affiliation.isActive ? (
+																<div className="text-green-500 flex items-center">
+																	<CheckCircle size={16} className="mr-1" />
+																	<span className="text-xs">Active</span>
+																</div>
+															) : (
+																<div className="text-red-500 flex items-center">
+																	<XCircle size={16} className="mr-1" />
+																	<span className="text-xs">Inactive</span>
+																</div>
+															)}
+														</div>
+													)}
 												</div>
 											</div>
 										);
@@ -169,6 +199,8 @@ const ProfilePage = () => {
 					<ExperienceSection userData={userData} isOwnProfile={isOwnProfile} onSave={handleSave} />
 					<EducationSection userData={userData} isOwnProfile={isOwnProfile} onSave={handleSave} />
 					<SkillsSection userData={userData} isOwnProfile={isOwnProfile} onSave={handleSave} />
+					<ProjectsSection userData={userData} isOwnProfile={isOwnProfile} onSave={handleSave} />
+					<RatingsSection userData={userData} />
 				</>
 			)}
 		</div>

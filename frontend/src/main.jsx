@@ -4,6 +4,7 @@ import './index.css'
 import App from './App.jsx'
 import { BrowserRouter } from 'react-router-dom';
 import { RecoilRoot } from 'recoil';
+import { AuthProvider } from './context/AuthContext.jsx';
 
 import {
   QueryClient,
@@ -18,7 +19,9 @@ createRoot(document.getElementById('root')).render(
     <RecoilRoot>
       <BrowserRouter>
         <QueryClientProvider client={queryClient}>
-          <App />
+          <AuthProvider>
+            <App />
+          </AuthProvider>
         </QueryClientProvider>
       </BrowserRouter>
     </RecoilRoot>

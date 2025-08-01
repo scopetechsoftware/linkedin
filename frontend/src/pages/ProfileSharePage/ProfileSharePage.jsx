@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { axiosInstance } from '../../lib/axios';
 import ProfileHeader from '../../components/ProfileHeader/ProfileHeader';
 import { Line } from 'react-chartjs-2';
@@ -143,16 +143,20 @@ export default function ProfileSharePage() {
                     <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
                         <h2 className="text-2xl font-bold mb-6">Affiliations</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {userAffiliations?.map(affiliation => (
+                            {userAffiliations?.filter(affiliation => affiliation.isActive).map(affiliation => (
                                 <div key={affiliation._id} className="bg-gray-50 rounded-lg p-4">
                                     <div className="flex items-center mb-4">
-                                        <img
-                                            src={affiliation.affiliator?.profilePicture || "/avatar.png"}
-                                            alt={affiliation.affiliator?.name}
-                                            className="w-12 h-12 rounded-full mr-4"
-                                        />
+                                        <Link to={`/profile/${affiliation.affiliator?.username}`}>
+                                            <img
+                                                src={affiliation.affiliator?.profilePicture ? `http://localhost:5000/uploads/${affiliation.affiliator.profilePicture}` : "/avatar.png"}
+                                                alt={affiliation.affiliator?.name}
+                                                className="w-12 h-12 rounded-full mr-4 hover:opacity-90 transition-opacity"
+                                            />
+                                        </Link>
                                         <div>
-                                            <h3 className="font-semibold text-lg">{affiliation.affiliator?.name}</h3>
+                                            <Link to={`/profile/${affiliation.affiliator?.username}`} className="hover:text-primary transition-colors">
+                                                <h3 className="font-semibold text-lg">{affiliation.affiliator?.name}</h3>
+                                            </Link>
                                             <p className="text-gray-600">{affiliation.role}</p>
                                         </div>
                                     </div>
