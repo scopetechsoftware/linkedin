@@ -49,7 +49,17 @@ const JobsPage = () => {
                 <h2 className="text-lg font-semibold mb-1">{job.title}</h2>
                 <div className="flex items-center text-gray-600 text-sm mb-1">
                   <Briefcase className="mr-1" size={16} />
-                  {job.createdBy?.name || "Unknown"}
+                  {job.createdBy ? (
+                    <Link 
+                      to={`/profile/${job.createdBy.username}`}
+                      className="text-blue-600 hover:text-blue-800 hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {job.createdBy.name}
+                    </Link>
+                  ) : (
+                    "Unknown"
+                  )}
                 </div>
                 <div className="flex items-center text-gray-600 text-sm mb-1">
                   <MapPin className="mr-1" size={16} />

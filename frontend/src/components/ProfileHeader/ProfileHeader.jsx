@@ -20,10 +20,10 @@ const ProfileHeader = ({ userData, onSave, isOwnProfile }) => {
 	const { data: connectionStatus, refetch: refetchConnectionStatus } = useQuery({
 		queryKey: ["connectionStatus", userData._id],
 		queryFn: () => axiosInstance.get(`/connections/status/${userData._id}`),
-		enabled: !isOwnProfile,
+		enabled: !isOwnProfile && userData.connections !== undefined,
 	});
 
-	const isConnected = userData.connections.some((connection) => connection === authUser._id);
+	const isConnected = userData.connections?.some((connection) => connection === authUser._id) || false;
 
 	const { mutate: sendConnectionRequest } = useMutation({
 		mutationFn: (userId) => axiosInstance.post(`/connections/request/${userId}`),
@@ -80,6 +80,11 @@ const ProfileHeader = ({ userData, onSave, isOwnProfile }) => {
 	}, [isConnected, connectionStatus]);
 
 	const renderConnectionButton = () => {
+		// Don't show connection buttons for private profiles (no connection data)
+		if (userData.connections === undefined) {
+			return null;
+		}
+		
 		const baseClass = "text-white py-2 px-4 rounded-full transition duration-300 flex items-center justify-center";
 		switch (getConnectionStatus) {
 			case "connected":
@@ -291,24 +296,24 @@ const ProfileHeader = ({ userData, onSave, isOwnProfile }) => {
 								}
 							};
 
-							return (
+							return userData.role ? (
 								<span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getRoleColor(userData.role)}`}>
 									{getRoleIcon(userData.role)}
 									{getRoleDisplayName(userData.role)}
 								</span>
-							);
+							) : null;
 						})()}
 					</div>
 
 					{isEditing ? (
 						<input
 							type='text'
-							value={editedData.headline ?? userData.headline}
+							value={editedData.headline ?? userData.headline ?? ''}
 							onChange={(e) => {
 								// Allow editing but prevent completely empty values
 								if (e.target.value === '') {
 									// Reset to original value instead of blocking the update
-									setEditedData({ ...editedData, headline: userData.headline });
+									setEditedData({ ...editedData, headline: userData.headline || '' });
 									return;
 								}
 								setEditedData({ ...editedData, headline: e.target.value })
@@ -316,7 +321,7 @@ const ProfileHeader = ({ userData, onSave, isOwnProfile }) => {
 							className='text-gray-600 text-center w-full'
 						/>
 					) : (
-						<p className='text-gray-600'>{userData.headline}</p>
+													<p className='text-gray-600'>{userData.headline || 'No headline'}</p>
 					)}
 
 					<div className='flex justify-center items-center mt-2'>

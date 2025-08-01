@@ -214,6 +214,20 @@ const SearchPageContent = () => {
                                         <div className="flex justify-between items-start">
                                             <div className="flex-1">
                                                 <h4 className="font-semibold text-gray-900">{job.title}</h4>
+                                                <div className="flex items-center text-sm text-gray-600 mb-1">
+                                                    <Briefcase className="mr-1" size={14} />
+                                                    {job.createdBy ? (
+                                                        <Link 
+                                                            to={`/profile/${job.createdBy.username}`}
+                                                            className="text-blue-600 hover:text-blue-800 hover:underline"
+                                                            onClick={(e) => e.stopPropagation()}
+                                                        >
+                                                            {job.createdBy.name}
+                                                        </Link>
+                                                    ) : (
+                                                        "Unknown"
+                                                    )}
+                                                </div>
                                                 <p className="text-sm text-gray-600">{job.location}</p>
                                                 <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
                                                     <span className="flex items-center">
@@ -345,9 +359,23 @@ const SearchPageContent = () => {
                                     <Link to={`/jobs/${job._id}`} key={job._id} className="block">
                                         <div className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors border-l-4 border-green-500">
                                             <div className="flex justify-between items-start">
-                                                <div className="flex-1">
-                                                    <h4 className="font-semibold text-gray-900">{job.title}</h4>
-                                                    <p className="text-sm text-gray-600">{job.location}</p>
+                                                                                            <div className="flex-1">
+                                                <h4 className="font-semibold text-gray-900">{job.title}</h4>
+                                                <div className="flex items-center text-sm text-gray-600 mb-1">
+                                                    <Briefcase className="mr-1" size={14} />
+                                                    {job.createdBy ? (
+                                                        <Link 
+                                                            to={`/profile/${job.createdBy.username}`}
+                                                            className="text-blue-600 hover:text-blue-800 hover:underline"
+                                                            onClick={(e) => e.stopPropagation()}
+                                                        >
+                                                            {job.createdBy.name}
+                                                        </Link>
+                                                    ) : (
+                                                        "Unknown"
+                                                    )}
+                                                </div>
+                                                <p className="text-sm text-gray-600">{job.location}</p>
                                                     <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
                                                         <span className="flex items-center">
                                                             <MapPin size={14} className="mr-1" />

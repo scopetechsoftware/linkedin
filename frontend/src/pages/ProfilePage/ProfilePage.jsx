@@ -87,6 +87,11 @@ const ProfilePage = () => {
 
 	const isOwnProfile = authUser.username === userProfile.data.username;
 	const userData = isOwnProfile ? authUser : userProfile.data;
+	
+	// Check if this is a limited profile (private profile)
+	const isLimitedProfile = userData && Object.keys(userData).length <= 6 && userData.privacySettings?.isProfilePrivate;
+	
+
 
 	const handleSave = (updatedData) => {
 		updateProfile(updatedData);
@@ -115,32 +120,11 @@ const ProfilePage = () => {
 			<ProfileHeader userData={userData} isOwnProfile={isOwnProfile} onSave={handleSave} />
 			
 			{/* Check if profile is private and not own profile */}
-			{(() => {
-				// Helper function to safely parse privacySettings
-				const parsePrivacySettings = (settings) => {
-					if (!settings) return { isProfilePrivate: false };
-					if (typeof settings === 'string') {
-						if (settings === '[object Object]') {
-							return { isProfilePrivate: false };
-						}
-						try {
-							return JSON.parse(settings);
-						} catch (e) {
-							console.error('Error parsing privacySettings:', e);
-							return { isProfilePrivate: false };
-						}
-					}
-					return settings;
-				};
-				
-				// Get privacySettings from userData
-				const settings = parsePrivacySettings(userData.privacySettings);
-				return settings.isProfilePrivate && !isOwnProfile;
-			})() ? (
+			{isLimitedProfile && !isOwnProfile ? (
 				<div className="bg-white rounded-lg shadow-lg p-6 text-center my-4">
 					<div className="text-gray-600 mb-4">
 						<svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto mb-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2 2v6a2 2 0 00-2 2zm10-10V7a4 4 0 00-8 0v4h8z" />
 						</svg>
 						<h2 className="text-2xl font-bold mb-2">This Profile is Private</h2>
 						<p className="text-lg">The user has chosen to keep their profile private.</p>
@@ -149,12 +133,14 @@ const ProfilePage = () => {
 				</div>
 			) : (
 				<>
-					<AboutSection userData={userData} isOwnProfile={isOwnProfile} onSave={handleSave} />
+					{/* Only show About section if not limited profile */}
+					{!isLimitedProfile && <AboutSection userData={userData} isOwnProfile={isOwnProfile} onSave={handleSave} />}
 
-					{/* Posts Section */}
-					{isPostsLoading ? (
-						<div className="bg-white rounded-lg shadow p-6 text-center my-4">Loading posts...</div>
-					) : userPosts?.data?.length > 0 ? (
+					{/* Posts Section - Only show if not limited profile */}
+					{!isLimitedProfile && (
+						isPostsLoading ? (
+							<div className="bg-white rounded-lg shadow p-6 text-center my-4">Loading posts...</div>
+						) : userPosts?.data?.length > 0 ? (
 						<div className="bg-white rounded-lg shadow p-6 my-4">
 							<div className="flex items-center justify-between mb-4">
 								<h2 className="text-xl font-bold flex items-center">
@@ -203,12 +189,14 @@ const ProfilePage = () => {
 								))}
 							</div>
 						</div>
-					) : null}
+					) : null
+					)}
 
-					{/* Jobs Section */}
-					{isJobsLoading ? (
-						<div className="bg-white rounded-lg shadow p-6 text-center my-4">Loading jobs...</div>
-					) : userJobs?.data?.length > 0 ? (
+					{/* Jobs Section - Only show if not limited profile */}
+					{!isLimitedProfile && (
+						isJobsLoading ? (
+							<div className="bg-white rounded-lg shadow p-6 text-center my-4">Loading jobs...</div>
+						) : userJobs?.data?.length > 0 ? (
 						<div className="bg-white rounded-lg shadow p-6 my-4">
 							<div className="flex items-center justify-between mb-4">
 								<h2 className="text-xl font-bold flex items-center">
@@ -232,6 +220,10 @@ const ProfilePage = () => {
 										<div className="flex items-start justify-between">
 											<div className="flex-1">
 												<h3 className="font-semibold text-lg mb-2">{job.title}</h3>
+												<div className="flex items-center text-sm text-gray-600 mb-2">
+													<Briefcase className="mr-1" size={14} />
+													<span className="text-blue-600 font-medium">{userData.name}</span>
+												</div>
 												<div className="flex items-center space-x-4 text-sm text-gray-600 mb-2">
 													<span className="flex items-center">
 														<MapPin size={14} className="mr-1" />
@@ -259,12 +251,14 @@ const ProfilePage = () => {
 								))}
 							</div>
 						</div>
-					) : null}
+					) : null
+					)}
 
-					{/* Affiliators Section (Organizations that the user is affiliated with) */}
-					{isAffiliationsLoading ? (
-						<div className="bg-white rounded-lg shadow p-6 text-center my-4">Loading affiliators...</div>
-					) : userAffiliations?.data?.length > 0 ? (
+					{/* Affiliators Section (Organizations that the user is affiliated with) - Only show if not limited profile */}
+					{!isLimitedProfile && (
+						isAffiliationsLoading ? (
+							<div className="bg-white rounded-lg shadow p-6 text-center my-4">Loading affiliators...</div>
+						) : userAffiliations?.data?.length > 0 ? (
 						<div className="bg-white rounded-lg shadow p-6 my-4">
 							<div className="flex items-center justify-between mb-4">
 								<h2 className="text-xl font-bold flex items-center">
@@ -357,12 +351,14 @@ const ProfilePage = () => {
 								})}
 							</div>
 						</div>
-					) : null}
+					) : null
+					)}
 
-					{/* Affiliations Section (Users who are affiliated with this profile) */}
-					{isAffiliatedUsersLoading ? (
-						<div className="bg-white rounded-lg shadow p-6 text-center my-4">Loading affiliations...</div>
-					) : affiliatedUsers?.data?.length > 0 ? (
+					{/* Affiliations Section (Users who are affiliated with this profile) - Only show if not limited profile */}
+					{!isLimitedProfile && (
+						isAffiliatedUsersLoading ? (
+							<div className="bg-white rounded-lg shadow p-6 text-center my-4">Loading affiliations...</div>
+						) : affiliatedUsers?.data?.length > 0 ? (
 						<div className="bg-white rounded-lg shadow p-6 my-4">
 							<div className="flex items-center justify-between mb-4">
 								<h2 className="text-xl font-bold flex items-center">
@@ -440,13 +436,19 @@ const ProfilePage = () => {
 								})}
 							</div>
 						</div>
-					) : null}
+					) : null
+					)}
 
-					<ExperienceSection userData={userData} isOwnProfile={isOwnProfile} onSave={handleSave} />
-					<EducationSection userData={userData} isOwnProfile={isOwnProfile} onSave={handleSave} />
-					<SkillsSection userData={userData} isOwnProfile={isOwnProfile} onSave={handleSave} />
-					<ProjectsSection userData={userData} isOwnProfile={isOwnProfile} onSave={handleSave} />
-					<RatingsSection userData={userData} />
+					{/* Only show detailed sections if not limited profile */}
+					{!isLimitedProfile && (
+						<>
+							<ExperienceSection userData={userData} isOwnProfile={isOwnProfile} onSave={handleSave} />
+							<EducationSection userData={userData} isOwnProfile={isOwnProfile} onSave={handleSave} />
+							<SkillsSection userData={userData} isOwnProfile={isOwnProfile} onSave={handleSave} />
+							<ProjectsSection userData={userData} isOwnProfile={isOwnProfile} onSave={handleSave} />
+							<RatingsSection userData={userData} />
+						</>
+					)}
 				</>
 			)}
 		</div>

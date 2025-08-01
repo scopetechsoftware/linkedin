@@ -28,28 +28,28 @@ const LoginForm = () => {
 
     return (
         <>
-            <form onSubmit={handleSubmit} className='space-y-4 w-full max-w-md'>
-				<input
-					type='text'
-					placeholder='Username'
-					value={username}
-					onChange={(e) => setUsername(e.target.value)}
-					className='input input-bordered w-full'
-					required
-				/>
-				<input
-					type='password'
-					placeholder='Password'
-					value={password}
-					onChange={(e) => setPassword(e.target.value)}
-					className='input input-bordered w-full'
-					required
-				/>
+        <form onSubmit={handleSubmit} className='space-y-4 w-full max-w-md'>
+			<input
+				type='text'
+				placeholder='Username'
+				value={username}
+				onChange={(e) => setUsername(e.target.value)}
+				className='input input-bordered w-full'
+				required
+			/>
+			<input
+				type='password'
+				placeholder='Password'
+				value={password}
+				onChange={(e) => setPassword(e.target.value)}
+				className='input input-bordered w-full'
+				required
+			/>
 
 				<div className="flex justify-between items-center">
 					<button type='submit' className='btn btn-primary flex-1 mr-2'>
-						{isLoading ? <Loader className='size-5 animate-spin' /> : "Login"}
-					</button>
+				{isLoading ? <Loader className='size-5 animate-spin' /> : "Login"}
+			</button>
 					<button
 						type="button"
 						onClick={() => setShowForgotPassword(true)}
@@ -58,7 +58,7 @@ const LoginForm = () => {
 						Forgot Password?
 					</button>
 				</div>
-			</form>
+		</form>
 
 			{/* Forgot Password Modal */}
 			<ForgotPassword 

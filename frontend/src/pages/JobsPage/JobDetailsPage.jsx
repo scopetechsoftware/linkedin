@@ -81,7 +81,16 @@ const JobDetailsPage = () => {
           <h1 className="text-2xl font-bold mb-2">{job.title}</h1>
           <div className="flex items-center text-gray-600 text-sm mb-2">
             <Briefcase className="mr-1" size={16} />
-            {job.createdBy?.name || "Unknown"}
+            {job.createdBy ? (
+              <Link 
+                to={`/profile/${job.createdBy.username}`}
+                className="text-blue-600 hover:text-blue-800 hover:underline"
+              >
+                {job.createdBy.name}
+              </Link>
+            ) : (
+              "Unknown"
+            )}
           </div>
           <div className="flex items-center text-gray-600 text-sm mb-2">
             <MapPin className="mr-1" size={16} />
@@ -126,7 +135,19 @@ const JobDetailsPage = () => {
                         {matchPercentage}% Match
                       </div>
                     </div>
-                    <div className="text-sm text-gray-600 mt-1">{similarJob.createdBy?.name || "Unknown"}</div>
+                    <div className="text-sm text-gray-600 mt-1">
+                      {similarJob.createdBy ? (
+                        <Link 
+                          to={`/profile/${similarJob.createdBy.username}`}
+                          className="text-blue-600 hover:text-blue-800 hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {similarJob.createdBy.name}
+                        </Link>
+                      ) : (
+                        "Unknown"
+                      )}
+                    </div>
                     <div className="flex items-center text-xs text-gray-500 mt-1">
                       <MapPin size={12} className="mr-1" />
                       {similarJob.location}

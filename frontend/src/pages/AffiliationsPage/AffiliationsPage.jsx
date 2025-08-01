@@ -135,9 +135,9 @@ const AffiliationsPage = () => {
                                     </Link>
                                     <div>
                                         <div className="flex items-center gap-2">
-                                            <Link to={`/profile/${person.username}`} className="hover:text-primary transition-colors">
-                                                <h3 className="font-semibold text-lg">{person.name}</h3>
-                                            </Link>
+                                        <Link to={`/profile/${person.username}`} className="hover:text-primary transition-colors">
+                                            <h3 className="font-semibold text-lg">{person.name}</h3>
+                                        </Link>
                                             {!affiliation.isActive && (
                                                 <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
                                                     Inactive
@@ -170,13 +170,13 @@ const AffiliationsPage = () => {
                                         
                                         {/* Only show deactivate button for active affiliations */}
                                         {affiliation.isActive && (
-                                            <button
-                                                onClick={() => handleToggleStatus(affiliation._id, affiliation.isActive)}
+                                        <button
+                                            onClick={() => handleToggleStatus(affiliation._id, affiliation.isActive)}
                                                 className="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded-full transition-colors"
                                                 title="Deactivate affiliation (permanent)"
-                                            >
+                                        >
                                                 <XCircle size={18} />
-                                            </button>
+                                        </button>
                                         )}
                                         
                                         {/* Delete button */}

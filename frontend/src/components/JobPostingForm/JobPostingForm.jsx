@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import toast from "react-hot-toast";
+import { axiosInstance } from "../../lib/axios";
 
 const initialState = {
   title: "",
@@ -31,30 +32,13 @@ const JobPostingForm = ({ isOpen, onClose, onPosted }) => {
     }
     setError("");
     try {
-      const res = await fetch("http://localhost:5000/api/v1/jobs", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ ...form, package: form.package }),
-      });
-      let data = null;
-      const text = await res.text();
-      try {
-        data = text ? JSON.parse(text) : null;
-      } catch {
-        throw new Error('Invalid JSON response: ' + text);
-      }
-      if (!res.ok) {
-        throw new Error((data && data.message) || "Failed to post job");
-      }
+      await axiosInstance.post("/jobs", { ...form, package: form.package });
       toast.success("Job posted successfully!");
       if (onPosted) onPosted();
       else onClose();
       setForm(initialState);
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     }
   };
 

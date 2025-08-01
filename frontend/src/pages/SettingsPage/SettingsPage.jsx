@@ -9,6 +9,17 @@ import ForgotPassword from '../../components/auth/ForgotPassword/ForgotPassword'
 const SettingsPage = () => {
   const { data: authUser, isLoading } = useQuery({
     queryKey: ['authUser'],
+    queryFn: async () => {
+      try {
+        const res = await axiosInstance.get("/auth/me");
+        return res.data;
+      } catch (error) {
+        if (error.response && error.response.status === 401) {
+          return null;
+        }
+        throw error;
+      }
+    }
   });
 
   const queryClient = useQueryClient();
@@ -29,6 +40,9 @@ const SettingsPage = () => {
         } else if (key !== 'profilePicturePreview' && key !== 'bannerImgPreview') {
           // Don't append preview data to FormData
           if (Array.isArray(updatedData[key])) {
+            formData.append(key, JSON.stringify(updatedData[key]));
+          } else if (key === 'privacySettings' && typeof updatedData[key] === 'object') {
+            // Special handling for privacySettings object
             formData.append(key, JSON.stringify(updatedData[key]));
           } else {
             formData.append(key, updatedData[key]);
@@ -461,7 +475,9 @@ const SettingsPage = () => {
                       // Get privacySettings from formData or authUser
                       const settings = formData.hasOwnProperty('privacySettings')
                         ? parsePrivacySettings(formData.privacySettings)
-                        : parsePrivacySettings(authUser.privacySettings);
+                        : parsePrivacySettings(authUser?.privacySettings);
+                      
+
                       
                       return settings.isProfilePrivate || false;
                     })()}
@@ -487,14 +503,16 @@ const SettingsPage = () => {
                         // Get current settings from formData or authUser
                         const currentSettings = prev.privacySettings
                           ? parsePrivacySettings(prev.privacySettings)
-                          : parsePrivacySettings(authUser.privacySettings) || {};
+                          : parsePrivacySettings(authUser?.privacySettings) || {};
+                        
+                        const newSettings = {
+                          ...currentSettings,
+                          isProfilePrivate: e.target.checked
+                        };
                         
                         return {
                           ...prev,
-                          privacySettings: {
-                            ...currentSettings,
-                            isProfilePrivate: e.target.checked
-                          }
+                          privacySettings: newSettings
                         };
                       });
                     }}
