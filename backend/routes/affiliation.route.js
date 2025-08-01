@@ -1,5 +1,5 @@
 import express from 'express';
-import { createAffiliation, deleteAffiliation, getAffiliations, getMyAffiliations, searchUsers, updateAffiliation, getAffiliationsByUsername, getAffiliatorsByUsername } from '../controllers/affiliation.controller.js';
+import { createAffiliation, deleteAffiliation, getAffiliations, getMyAffiliations, searchUsers, updateAffiliation, getAffiliationsByUsername, getAffiliatorsByUsername, getAffiliatedUsersByUsername } from '../controllers/affiliation.controller.js';
 import { protectRoute } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
@@ -30,5 +30,8 @@ router.get('/user/:username', getAffiliationsByUsername);
 
 // Get affiliators for a user by username (organizations that the user is affiliated with)
 router.get('/affiliators/:username', getAffiliatorsByUsername);
+
+// Get users affiliated with a specific organization by username
+router.get('/affiliated/:username', getAffiliatedUsersByUsername);
 
 export default router;
