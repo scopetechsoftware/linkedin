@@ -1,4 +1,5 @@
 import User from "../models/user.model.js"
+import Affiliation from "../models/affiliation.model.js";
 
 export const getSuggestedConnections = async (req, res) => {
 	try {
@@ -44,7 +45,19 @@ export const getPublicProfile = async (req, res) => {
 			return res.json(limitedProfile);
 		}
 
-		res.json(user);
+		// Fetch affiliations for the user
+		const affiliations = await Affiliation.find({ affiliated: user._id })
+			.populate("affiliator", "name email username profilePicture headline")
+			.sort({ startDate: -1 })
+			.lean();
+
+		// Add affiliations to the user object
+		const userWithAffiliations = {
+			...user.toObject(),
+			affiliations: affiliations
+		};
+
+		res.json(userWithAffiliations);
 	} catch (error) {
 		console.error("Error in getPublicProfile controller:", error);
 		res.status(500).json({ message: "Server error" });
@@ -133,4 +146,47 @@ export const updateProfile = async (req, res) => {
 		console.error("Error in updateProfile controller:", error);
 		res.status(500).json({ message: "Server error" });
 	}
+};
+
+export const searchUser = async (req, res) => {
+  try {
+    const { username, email } = req.query;
+    
+    if (!username && !email) {
+      return res.status(400).json({ message: "Username or email is required" });
+    }
+
+    let query = {};
+    if (username) {
+      query.username = username;
+    }
+    if (email) {
+      query.email = email;
+    }
+
+    const user = await User.findOne(query)
+      .select('-password')
+      .lean();
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Fetch affiliations for the user
+    const affiliations = await Affiliation.find({ affiliated: user._id })
+      .populate("affiliator", "name email username profilePicture headline")
+      .sort({ startDate: -1 })
+      .lean();
+
+    // Add affiliations to the user object
+    const userWithAffiliations = {
+      ...user,
+      affiliations: affiliations
+    };
+
+    res.json(userWithAffiliations);
+  } catch (error) {
+    console.error("Error searching user:", error);
+    res.status(500).json({ message: "Server error" });
+  }
 };

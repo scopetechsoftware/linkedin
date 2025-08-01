@@ -3,6 +3,308 @@ import Post from '../models/post.model.js';
 import Job from '../models/job.model.js';
 import Company from '../models/company.model.js';
 
+export const getSkillMatchedContent = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        
+        // Get current user's skills
+        const currentUser = await User.findById(userId).select('skills');
+        const userSkills = currentUser?.skills || [];
+        
+        if (userSkills.length === 0) {
+            // If user has no skills, return recent content
+            const [recentPeople, recentJobs, recentPosts] = await Promise.all([
+                User.find({
+                    profilePicture: { $exists: true, $ne: null },
+                    privacySettings: { $ne: { isProfilePrivate: true } },
+                    _id: { $ne: userId }
+                })
+                .select('name email username role profilePicture headline location skills')
+                .sort({ createdAt: -1 })
+                .limit(3),
+                
+                Job.find()
+                    .populate('createdBy', 'name avatar')
+                    .sort({ createdAt: -1 })
+                    .limit(3),
+                    
+                Post.find()
+                    .populate('author', 'name avatar username')
+                    .sort({ createdAt: -1 })
+                    .limit(3)
+            ]);
+            
+            return res.status(200).json({
+                people: recentPeople,
+                jobs: recentJobs,
+                posts: recentPosts,
+                message: "No skills found, showing recent content"
+            });
+        }
+
+        // Create regex patterns for skill matching
+        const skillPatterns = userSkills.map(skill => new RegExp(skill, 'i'));
+
+        // Find people with matching skills
+        const skillMatchedPeople = await User.find({
+            _id: { $ne: userId },
+            privacySettings: { $ne: { isProfilePrivate: true } },
+            $or: [
+                { skills: { $in: skillPatterns } },
+                { headline: { $in: skillPatterns } },
+                { about: { $in: skillPatterns } }
+            ]
+        })
+        .select('name email username role profilePicture headline location skills')
+        .sort({ createdAt: -1 })
+        .limit(3);
+
+        // Find jobs with matching skills
+        const skillMatchedJobs = await Job.find({
+            $or: [
+                { skill: { $in: skillPatterns } },
+                { technology: { $in: skillPatterns } },
+                { title: { $in: skillPatterns } },
+                { description: { $in: skillPatterns } }
+            ]
+        })
+        .populate('createdBy', 'name avatar')
+        .sort({ createdAt: -1 })
+        .limit(3);
+
+        // Find posts with matching skills
+        const skillMatchedPosts = await Post.find({
+            $or: [
+                { content: { $in: skillPatterns } },
+                { title: { $in: skillPatterns } }
+            ]
+        })
+        .populate('author', 'name avatar username')
+        .sort({ createdAt: -1 })
+        .limit(3);
+
+        res.status(200).json({
+            people: skillMatchedPeople,
+            jobs: skillMatchedJobs,
+            posts: skillMatchedPosts,
+            userSkills: userSkills
+        });
+    } catch (error) {
+        console.error('Error fetching skill-matched content:', error);
+        res.status(500).json({ message: 'Error fetching skill-matched content' });
+    }
+};
+
+export const getSkillMatchedPeople = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        
+        // Get current user's skills
+        const currentUser = await User.findById(userId).select('skills');
+        const userSkills = currentUser?.skills || [];
+        
+        if (userSkills.length === 0) {
+            // If user has no skills, return recent people
+            const recentPeople = await User.find({
+                profilePicture: { $exists: true, $ne: null },
+                privacySettings: { $ne: { isProfilePrivate: true } },
+                _id: { $ne: userId }
+            })
+            .select('name email username role profilePicture headline location skills')
+            .sort({ createdAt: -1 })
+            .limit(10);
+            
+            return res.status(200).json({
+                people: recentPeople,
+                userSkills: userSkills,
+                message: "No skills found, showing recent people"
+            });
+        }
+
+        // Create regex patterns for skill matching
+        const skillPatterns = userSkills.map(skill => new RegExp(skill, 'i'));
+
+        // Find people with matching skills
+        const skillMatchedPeople = await User.find({
+            _id: { $ne: userId },
+            privacySettings: { $ne: { isProfilePrivate: true } },
+            $or: [
+                { skills: { $in: skillPatterns } },
+                { headline: { $in: skillPatterns } },
+                { about: { $in: skillPatterns } }
+            ]
+        })
+        .select('name email username role profilePicture headline location skills')
+        .sort({ createdAt: -1 })
+        .limit(10);
+
+        res.status(200).json({
+            people: skillMatchedPeople,
+            userSkills: userSkills
+        });
+    } catch (error) {
+        console.error('Error fetching skill-matched people:', error);
+        res.status(500).json({ message: 'Error fetching skill-matched people' });
+    }
+};
+
+export const getSkillMatchedJobs = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        
+        // Get current user's skills
+        const currentUser = await User.findById(userId).select('skills');
+        const userSkills = currentUser?.skills || [];
+        
+        if (userSkills.length === 0) {
+            // If user has no skills, return recent jobs
+            const recentJobs = await Job.find()
+                .populate('createdBy', 'name avatar')
+                .sort({ createdAt: -1 })
+                .limit(10);
+            
+            return res.status(200).json({
+                jobs: recentJobs,
+                userSkills: userSkills,
+                message: "No skills found, showing recent jobs"
+            });
+        }
+
+        // Create regex patterns for skill matching
+        const skillPatterns = userSkills.map(skill => new RegExp(skill, 'i'));
+
+        // Find jobs with matching skills
+        const skillMatchedJobs = await Job.find({
+            $or: [
+                { skill: { $in: skillPatterns } },
+                { technology: { $in: skillPatterns } },
+                { title: { $in: skillPatterns } },
+                { description: { $in: skillPatterns } }
+            ]
+        })
+        .populate('createdBy', 'name avatar')
+        .sort({ createdAt: -1 })
+        .limit(10);
+
+        res.status(200).json({
+            jobs: skillMatchedJobs,
+            userSkills: userSkills
+        });
+    } catch (error) {
+        console.error('Error fetching skill-matched jobs:', error);
+        res.status(500).json({ message: 'Error fetching skill-matched jobs' });
+    }
+};
+
+export const getSkillMatchedPosts = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        
+        // Get current user's skills
+        const currentUser = await User.findById(userId).select('skills');
+        const userSkills = currentUser?.skills || [];
+        
+        if (userSkills.length === 0) {
+            // If user has no skills, return recent posts
+            const recentPosts = await Post.find()
+                .populate('author', 'name avatar username')
+                .sort({ createdAt: -1 })
+                .limit(10);
+            
+            return res.status(200).json({
+                posts: recentPosts,
+                userSkills: userSkills,
+                message: "No skills found, showing recent posts"
+            });
+        }
+
+        // Create regex patterns for skill matching
+        const skillPatterns = userSkills.map(skill => new RegExp(skill, 'i'));
+
+        // Find posts with matching skills
+        const skillMatchedPosts = await Post.find({
+            $or: [
+                { content: { $in: skillPatterns } },
+                { title: { $in: skillPatterns } }
+            ]
+        })
+        .populate('author', 'name avatar username')
+        .sort({ createdAt: -1 })
+        .limit(10);
+
+        res.status(200).json({
+            posts: skillMatchedPosts,
+            userSkills: userSkills
+        });
+    } catch (error) {
+        console.error('Error fetching skill-matched posts:', error);
+        res.status(500).json({ message: 'Error fetching skill-matched posts' });
+    }
+};
+
+export const searchAll = async (req, res) => {
+    try {
+        const { query } = req.query;
+        console.log('Comprehensive search query:', query);
+        
+        if (!query || typeof query !== 'string') {
+            return res.status(400).json({ message: 'Valid search query is required' });
+        }
+
+        const searchQuery = query.trim();
+        if (searchQuery.length < 1) {
+            return res.status(400).json({ message: 'Search query cannot be empty' });
+        }
+
+        // Search across all content types in parallel
+        const [people, jobs, posts] = await Promise.all([
+            User.find({
+                $or: [
+                    { name: { $regex: searchQuery, $options: 'i' } },
+                    { email: { $regex: searchQuery, $options: 'i' } },
+                    { username: { $regex: searchQuery, $options: 'i' } },
+                    { headline: { $regex: searchQuery, $options: 'i' } },
+                    { skills: { $regex: searchQuery, $options: 'i' } }
+                ]
+            }).select('name email username avatar role profilePicture headline location privacySettings skills').limit(6),
+            
+            Job.find({
+                $or: [
+                    { title: { $regex: searchQuery, $options: 'i' } },
+                    { description: { $regex: searchQuery, $options: 'i' } },
+                    { skill: { $regex: searchQuery, $options: 'i' } },
+                    { technology: { $regex: searchQuery, $options: 'i' } }
+                ]
+            }).populate('createdBy', 'name avatar').limit(6),
+            
+            Post.find({
+                $or: [
+                    { content: { $regex: searchQuery, $options: 'i' } },
+                    { title: { $regex: searchQuery, $options: 'i' } }
+                ]
+            }).populate('author', 'name avatar username').limit(6)
+        ]);
+
+        const results = {
+            people: people.filter(user => !user.privacySettings?.isProfilePrivate),
+            jobs,
+            posts
+        };
+
+        console.log('Comprehensive search results:', {
+            query: searchQuery,
+            people: results.people.length,
+            jobs: results.jobs.length,
+            posts: results.posts.length
+        });
+
+        res.status(200).json(results);
+    } catch (error) {
+        console.error('Error in comprehensive search:', error);
+        res.status(500).json({ message: 'Error searching content' });
+    }
+};
+
 export const searchPeople = async (req, res) => {
     try {
         const { query } = req.query;
@@ -21,12 +323,17 @@ export const searchPeople = async (req, res) => {
             $or: [
                 { name: { $regex: searchQuery, $options: 'i' } },
                 { email: { $regex: searchQuery, $options: 'i' } },
-                { username: { $regex: searchQuery, $options: 'i' } }
+                { username: { $regex: searchQuery, $options: 'i' } },
+                { headline: { $regex: searchQuery, $options: 'i' } },
+                { skills: { $regex: searchQuery, $options: 'i' } }
             ]
-        }).select('name email username avatar role profilePicture headline location privacySettings').limit(10);
+        }).select('name email username avatar role profilePicture headline location privacySettings skills').limit(10);
 
-        console.log('Search query:', searchQuery, 'Found users:', users.length);
-        res.status(200).json(users);
+        // Filter out private profiles
+        const publicUsers = users.filter(user => !user.privacySettings?.isProfilePrivate);
+
+        console.log('Search query:', searchQuery, 'Found users:', publicUsers.length);
+        res.status(200).json(publicUsers);
     } catch (error) {
         res.status(500).json({ message: 'Error searching users' });
     }
@@ -99,7 +406,7 @@ export const searchPosts = async (req, res) => {
                 { content: { $regex: query, $options: 'i' } },
                 { title: { $regex: query, $options: 'i' } }
             ]
-        }).populate('author', 'name avatar username');
+        }).populate('author', 'name avatar username').limit(10);
 
         res.json(posts);
     } catch (error) {

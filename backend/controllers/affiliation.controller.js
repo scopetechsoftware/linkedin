@@ -205,3 +205,33 @@ export const getAffiliationsByUsername = async (req, res) => {
         res.status(500).json({ message: "Server error" });
     }
 };
+
+// Get affiliators for a user by username (organizations that the user is affiliated with)
+export const getAffiliatorsByUsername = async (req, res) => {
+    try {
+        const { username } = req.params;
+        const user = await User.findOne({ username });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        
+        // Check if the profile is private and the requester is not the profile owner
+        if (user.privacySettings?.isProfilePrivate && req.user._id.toString() !== user._id.toString()) {
+            return res.json([]);
+        }
+        
+        // Only show active affiliations unless the requester is the profile owner
+        const query = { affiliated: user._id };
+        if (req.user._id.toString() !== user._id.toString()) {
+            query.isActive = true;
+        }
+        
+        const affiliations = await Affiliation.find(query)
+            .populate("affiliator", "name email username profilePicture headline")
+            .sort({ startDate: -1 });
+        res.json(affiliations);
+    } catch (error) {
+        console.error("Error in getAffiliatorsByUsername:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+};

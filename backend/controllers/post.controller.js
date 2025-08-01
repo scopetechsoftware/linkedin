@@ -162,3 +162,27 @@ export const likePost = async (req, res) => {
 		res.status(500).json({ message: "Server error" });
 	}
 };
+
+export const getPostsByUser = async (req, res) => {
+	try {
+		const { username } = req.params;
+		
+		// First get the user by username
+		const User = await import("../models/user.model.js").then(module => module.default);
+		const user = await User.findOne({ username }).select("_id");
+		
+		if (!user) {
+			return res.status(404).json({ message: "User not found" });
+		}
+
+		const posts = await Post.find({ author: user._id })
+			.populate("author", "name username profilePicture headline")
+			.populate("comments.user", "name profilePicture")
+			.sort({ createdAt: -1 });
+
+		res.status(200).json(posts);
+	} catch (error) {
+		console.error("Error in getPostsByUser controller:", error);
+		res.status(500).json({ message: "Server error" });
+	}
+};
