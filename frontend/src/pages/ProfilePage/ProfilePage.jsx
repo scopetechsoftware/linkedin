@@ -9,7 +9,7 @@ import EducationSection from "../../components/EducationSection/EducationSection
 import SkillsSection from "../../components/SkillsSection/SkillsSection";
 import ProjectsSection from "../../components/ProjectsSection/ProjectsSection";
 import RatingsSection from "../../components/RatingsSection/RatingsSection";
-import { Calendar, Users, GraduationCap, Building, XCircle, CheckCircle } from "lucide-react";
+import { Calendar, Users, GraduationCap, Building, XCircle, CheckCircle, Briefcase, MapPin, Clock, FileText } from "lucide-react";
 import { format } from "date-fns";
 
 const ProfilePage = () => {
@@ -29,6 +29,24 @@ const ProfilePage = () => {
 	const { data: userAffiliations, isLoading: isAffiliationsLoading } = useQuery({
 		queryKey: ["affiliations", username],
 		queryFn: () => axiosInstance.get(`/affiliations/user/${username}`),
+	});
+
+	// Fetch affiliators for this user (organizations that the user is affiliated with)
+	const { data: userAffiliators, isLoading: isAffiliatorsLoading } = useQuery({
+		queryKey: ["affiliators", username],
+		queryFn: () => axiosInstance.get(`/affiliations/affiliators/${username}`),
+	});
+
+	// Fetch jobs by this user
+	const { data: userJobs, isLoading: isJobsLoading } = useQuery({
+		queryKey: ["userJobs", username],
+		queryFn: () => axiosInstance.get(`/jobs/user/${username}`),
+	});
+
+	// Fetch posts by this user
+	const { data: userPosts, isLoading: isPostsLoading } = useQuery({
+		queryKey: ["userPosts", username],
+		queryFn: () => axiosInstance.get(`/posts/user/${username}`),
 	});
 
 	const { mutate: updateProfile } = useMutation({
@@ -68,7 +86,23 @@ const ProfilePage = () => {
 		updateProfile(updatedData);
 	};
 
-	
+	const formatDate = (dateString) => {
+		if (!dateString) return "Present";
+		return format(new Date(dateString), "MMM yyyy");
+	};
+
+	const getRoleIcon = (role) => {
+		switch (role) {
+			case "student":
+			case "professor":
+				return <GraduationCap className="mr-2" size={18} />;
+			case "employee":
+			case "employer":
+				return <Building className="mr-2" size={18} />;
+			default:
+				return <Users className="mr-2" size={18} />;
+		}
+	};
 
 	return (
 		<div className='max-w-4xl mx-auto p-4'>
@@ -111,87 +145,210 @@ const ProfilePage = () => {
 				<>
 					<AboutSection userData={userData} isOwnProfile={isOwnProfile} onSave={handleSave} />
 
-					{/* Affiliations Section */}
-					{isAffiliationsLoading ? (
-						<div className="bg-white rounded-lg shadow p-6 text-center my-4">Loading affiliations...</div>
-					) : userAffiliations?.data?.length > 0 ? (
+					{/* Posts Section */}
+					{isPostsLoading ? (
+						<div className="bg-white rounded-lg shadow p-6 text-center my-4">Loading posts...</div>
+					) : userPosts?.data?.length > 0 ? (
 						<div className="bg-white rounded-lg shadow p-6 my-4">
-							<h2 className="text-xl font-bold mb-4">Affiliations</h2>
+							<div className="flex items-center justify-between mb-4">
+								<h2 className="text-xl font-bold flex items-center">
+									<FileText className="mr-2" size={20} />
+									Posts
+								</h2>
+								<Link 
+									to={`/posts/user/${username}`}
+									className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+								>
+									View All ({userPosts.data.length})
+								</Link>
+							</div>
 							<div className="space-y-4">
-								{[...userAffiliations.data]
-									.filter(affiliation => isOwnProfile ? true : affiliation.isActive) // Show all affiliations for own profile
-									.sort((a, b) => new Date(b.startDate) - new Date(a.startDate))
-									.map((affiliation) => {
-										const org = affiliation.affiliator;
-										const getRoleIcon = (role) => {
-											switch (role) {
-												case "student":
-												case "professor":
-													return <GraduationCap className="mr-2" size={18} />;
-												case "employee":
-												case "employer":
-													return <Building className="mr-2" size={18} />;
-												default:
-													return <Users className="mr-2" size={18} />;
-											}
-										};
-										const formatDate = (dateString) => {
-											if (!dateString) return "Present";
-											return format(new Date(dateString), "MMM yyyy");
-										};
-										return (
-											<div key={affiliation._id} className={`bg-gray-50 rounded-lg shadow p-4 ${!affiliation.isActive && isOwnProfile ? 'opacity-70' : ''}`}>
-												<div className="flex items-start justify-between">
-													<div className="flex items-center">
-														<Link to={`/profile/${org.username}`}>
-															<img
-																src={org.profilePicture || "/avatar.png"}
-																alt={org.name}
-																className="w-12 h-12 rounded-full mr-4 hover:opacity-90 transition-opacity"
-															/>
-														</Link>
-														<div>
-															<Link to={`/profile/${org.username}`} className="hover:text-primary transition-colors">
-																<h3 className="font-semibold text-lg">{org.name}</h3>
-															</Link>
-															<p className="text-gray-600 text-sm">{org.headline || org.email}</p>
-															<div className="flex items-center mt-1 text-sm text-gray-700">
-																{getRoleIcon(affiliation.role)}
-																<span className="capitalize">{affiliation.role}</span>
-															</div>
-															<div className="flex items-center mt-1 text-sm text-gray-700">
-																<Calendar className="mr-2" size={16} />
-																<span>
-																	{formatDate(affiliation.startDate)} - {formatDate(affiliation.endDate)}
-																</span>
-															</div>
-															{isOwnProfile && !affiliation.isActive && (
-																<div className="flex items-center mt-1 text-sm text-red-500">
-																	<XCircle className="mr-2" size={16} />
-																	<span>Deactivated</span>
-																</div>
-															)}
-														</div>
-													</div>
-													{isOwnProfile && (
-														<div className="flex-shrink-0">
-															{affiliation.isActive ? (
-																<div className="text-green-500 flex items-center">
-																	<CheckCircle size={16} className="mr-1" />
-																	<span className="text-xs">Active</span>
-																</div>
-															) : (
-																<div className="text-red-500 flex items-center">
-																	<XCircle size={16} className="mr-1" />
-																	<span className="text-xs">Inactive</span>
-																</div>
-															)}
-														</div>
+								{userPosts.data.slice(0, 3).map((post) => (
+									<Link 
+										key={post._id} 
+										to={`/posts/${post._id}`}
+										className="block bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors"
+									>
+										<div className="flex items-start justify-between">
+											<div className="flex-1">
+												<h3 className="font-semibold text-lg mb-2">{post.title || "Post"}</h3>
+												<p className="text-gray-700 line-clamp-3">{post.content}</p>
+												<div className="flex items-center space-x-4 text-sm text-gray-600 mt-2">
+													<span className="flex items-center">
+														<Calendar size={14} className="mr-1" />
+														{format(new Date(post.createdAt), "MMM dd, yyyy")}
+													</span>
+													{post.likes && (
+														<span className="flex items-center">
+															<Users size={14} className="mr-1" />
+															{post.likes.length} likes
+														</span>
+													)}
+													{post.comments && (
+														<span className="flex items-center">
+															<FileText size={14} className="mr-1" />
+															{post.comments.length} comments
+														</span>
 													)}
 												</div>
 											</div>
-										);
-									})}
+										</div>
+									</Link>
+								))}
+							</div>
+						</div>
+					) : null}
+
+					{/* Jobs Section */}
+					{isJobsLoading ? (
+						<div className="bg-white rounded-lg shadow p-6 text-center my-4">Loading jobs...</div>
+					) : userJobs?.data?.length > 0 ? (
+						<div className="bg-white rounded-lg shadow p-6 my-4">
+							<div className="flex items-center justify-between mb-4">
+								<h2 className="text-xl font-bold flex items-center">
+									<Briefcase className="mr-2" size={20} />
+									Job Postings
+								</h2>
+								<Link 
+									to={`/jobs/user/${username}`}
+									className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+								>
+									View All ({userJobs.data.length})
+								</Link>
+							</div>
+							<div className="space-y-4">
+								{userJobs.data.slice(0, 3).map((job) => (
+									<Link 
+										key={job._id} 
+										to={`/jobs/${job._id}`}
+										className="block bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors"
+									>
+										<div className="flex items-start justify-between">
+											<div className="flex-1">
+												<h3 className="font-semibold text-lg mb-2">{job.title}</h3>
+												<div className="flex items-center space-x-4 text-sm text-gray-600 mb-2">
+													<span className="flex items-center">
+														<MapPin size={14} className="mr-1" />
+														{job.location}
+													</span>
+													<span className="flex items-center">
+														<Clock size={14} className="mr-1" />
+														{job.type}
+													</span>
+													<span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
+														${job.package}
+													</span>
+												</div>
+												<p className="text-gray-700 line-clamp-2">{job.description}</p>
+												<div className="flex flex-wrap gap-2 mt-2">
+													{job.skill?.split(',').map((skill, index) => (
+														<span key={index} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+															{skill.trim()}
+														</span>
+													))}
+												</div>
+											</div>
+										</div>
+									</Link>
+								))}
+							</div>
+						</div>
+					) : null}
+
+					{/* Affiliators Section (Organizations that the user is affiliated with) */}
+					{isAffiliatorsLoading ? (
+						<div className="bg-white rounded-lg shadow p-6 text-center my-4">Loading affiliators...</div>
+					) : userAffiliators?.data?.length > 0 ? (
+						<div className="bg-white rounded-lg shadow p-6 my-4">
+							<div className="flex items-center justify-between mb-4">
+								<h2 className="text-xl font-bold flex items-center">
+									<Building className="mr-2" size={20} />
+									Organizations & Companies
+								</h2>
+								<Link 
+									to={`/affiliations/affiliators/${username}`}
+									className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+								>
+									View All ({userAffiliators.data.length})
+								</Link>
+							</div>
+							<div className="space-y-4">
+								{userAffiliators.data.slice(0, 3).map((affiliation) => {
+									const org = affiliation.affiliator;
+									const getOrgType = (role) => {
+										switch (role) {
+											case "company":
+												return "Company";
+											case "university":
+												return "University";
+											case "employer":
+												return "Employer";
+											default:
+												return "Organization";
+										}
+									};
+									
+									// Use organization name, fallback to username if name is not set
+									const orgDisplayName = org.name || org.username;
+									
+									return (
+										<Link 
+											key={affiliation._id} 
+											to={`/profile/${org.username}`}
+											className={`block bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors ${!affiliation.isActive && isOwnProfile ? 'opacity-70' : ''}`}
+										>
+											<div className="flex items-start justify-between">
+												<div className="flex items-center">
+													<img
+														src={org.profilePicture || "/avatar.png"}
+														alt={orgDisplayName}
+														className="w-12 h-12 rounded-full mr-4"
+													/>
+													<div>
+														<div className="flex items-center gap-2">
+															<h3 className="font-semibold text-lg">{orgDisplayName}</h3>
+															<span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+																{getOrgType(org.role)}
+															</span>
+														</div>
+														<p className="text-gray-600 text-sm">{org.headline || org.email}</p>
+														<div className="flex items-center mt-1 text-sm text-gray-700">
+															{getRoleIcon(affiliation.role)}
+															<span className="capitalize">{userData.name} role: {affiliation.role}</span>
+														</div>
+														<div className="flex items-center mt-1 text-sm text-gray-700">
+															<Calendar className="mr-2" size={16} />
+															<span>
+																{formatDate(affiliation.startDate)} - {formatDate(affiliation.endDate)}
+															</span>
+														</div>
+														{isOwnProfile && !affiliation.isActive && (
+															<div className="flex items-center mt-1 text-sm text-red-500">
+																<XCircle className="mr-2" size={16} />
+																<span>Deactivated</span>
+															</div>
+														)}
+													</div>
+												</div>
+												{isOwnProfile && (
+													<div className="flex-shrink-0">
+														{affiliation.isActive ? (
+															<div className="text-green-500 flex items-center">
+																<CheckCircle size={16} className="mr-1" />
+																<span className="text-xs">Active</span>
+															</div>
+														) : (
+															<div className="text-red-500 flex items-center">
+																<XCircle size={16} className="mr-1" />
+																<span className="text-xs">Inactive</span>
+															</div>
+														)}
+													</div>
+												)}
+											</div>
+										</Link>
+									);
+								})}
 							</div>
 						</div>
 					) : null}
@@ -206,4 +363,5 @@ const ProfilePage = () => {
 		</div>
 	);
 };
+
 export default ProfilePage;

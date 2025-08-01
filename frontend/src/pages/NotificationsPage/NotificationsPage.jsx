@@ -386,7 +386,7 @@ const NotificationsPage = () => {
 										<div className='flex items-center space-x-4'>
 											<Link to={`/profile/${notification.relatedUser.username}`}>
 												<img
-													src={notification.relatedUser.profilePicture || "/avatar.png"}
+													src={`http://localhost:5000/uploads/${notification.relatedUser.profilePicture}`|| "/avatar.png"}
 													alt={notification.relatedUser.name}
 													className='w-12 h-12 rounded-full object-cover'
 												/>

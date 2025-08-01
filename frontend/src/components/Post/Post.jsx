@@ -139,13 +139,13 @@ const Post = ({ post }) => {
 					<div className='mb-4 max-h-60 overflow-y-auto'>
 						{comments.map((comment) => (
 							<div key={comment._id} className='mb-2 bg-base-100 p-2 rounded flex items-start'>
-								// ... existing code ...
+								
 								<img
 									src={comment.user.profilePicture ? `http://localhost:5000/uploads/${comment.user.profilePicture}` : "/avatar.png"}
 									alt={comment.user.name}
 									className='w-8 h-8 rounded-full mr-2 flex-shrink-0'
 								/>
-// ... existing code ...
+
 								<div className='flex-grow'>
 									<div className='flex items-center mb-1'>
 										<span className='font-semibold mr-2'>{comment.user.name}</span>

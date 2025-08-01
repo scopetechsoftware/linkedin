@@ -162,12 +162,12 @@ export default function Sidebar({ user }) {
 							</li>
 						)}
 						<li>
-							<Link
+							{/* <Link
                                 to={`/profile-share/${user.username}`}
                                 className='flex items-center py-2 px-4 rounded-md hover:bg-primary hover:text-white transition-colors'
                             >
                                 <Share2 className='mr-2' size={20} /> Profile Share
-                            </Link>
+                            </Link> */}
                         </li>
 					</ul>
 				</nav>

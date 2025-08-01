@@ -5,6 +5,8 @@ import { Bell, Home, LogOut, Search, User, Users } from "lucide-react";
 import { useState } from "react";
 import ChatIcon from "../Chat/ChatIcon";
 import ChatWindow from "../Chat/ChatWindow";
+import AIChatIcon from "../AIChat/AIChatIcon";
+import AIChatWindow from "../AIChat/AIChatWindow";
  // make sure axios is set up with auth token
 
 
@@ -14,6 +16,7 @@ const Navbar = () => {
     });
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [selectedChat, setSelectedChat] = useState(null);
+    const [isAIChatOpen, setIsAIChatOpen] = useState(false);
     const queryClient = useQueryClient();
 
 
@@ -98,6 +101,10 @@ const Navbar = () => {
                                         <span className='text-xs hidden md:block'>Settings</span>
                                     </Link>
                                     <ChatIcon onClick={() => setIsChatOpen(!isChatOpen)} />
+                                    <AIChatIcon 
+                                        onClick={() => setIsAIChatOpen(!isAIChatOpen)} 
+                                        isOpen={isAIChatOpen}
+                                    />
                                     <button
                                         className='flex items-center space-x-1 text-sm text-gray-600 hover:text-gray-800'
                                         onClick={() => logout()}
@@ -126,6 +133,12 @@ const Navbar = () => {
                     onClose={() => setIsChatOpen(false)} 
                     selectedChat={selectedChat} 
                     setSelectedChat={setSelectedChat} 
+                />
+            )}
+            {authUser && (
+                <AIChatWindow 
+                    isOpen={isAIChatOpen} 
+                    onClose={() => setIsAIChatOpen(false)} 
                 />
             )}
         </>

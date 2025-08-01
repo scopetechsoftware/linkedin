@@ -211,7 +211,9 @@ const ChatWindow = ({ isOpen, onClose, selectedChat, setSelectedChat }) => {
 			socket.emit("send_message", {
 				chatId: selectedChat._id,
 				content: message.trim(),
+				
 			});
+			setMessage("");
 		} else {
 			// Fallback to REST API if socket is not available
 			sendMessage(message.trim());
@@ -220,6 +222,7 @@ const ChatWindow = ({ isOpen, onClose, selectedChat, setSelectedChat }) => {
 		// Clear typing indicator
 		if (typingTimeout) clearTimeout(typingTimeout);
 		if (socket) socket.emit("stop_typing", { chatId: selectedChat._id });
+		
 	};
 
 	const handleBackToList = () => {
@@ -371,7 +374,7 @@ const ChatWindow = ({ isOpen, onClose, selectedChat, setSelectedChat }) => {
 											className="relative group"
 										>
 											<img
-												src={otherUser?.profilePicture || "/avatar.png"}
+												src={`http://localhost:5000/uploads/${otherUser?.profilePicture}`|| "/avatar.png"}
 												alt={otherUser?.name}
 												className="w-10 h-10 rounded-full mr-3 object-cover group-hover:opacity-90 transition-opacity"
 											/>
