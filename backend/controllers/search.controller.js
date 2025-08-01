@@ -3,6 +3,19 @@ import Post from '../models/post.model.js';
 import Job from '../models/job.model.js';
 import Company from '../models/company.model.js';
 
+// Function to clean skills by removing percentage numbers and symbols
+const cleanSkill = (skill) => {
+    if (!skill) return '';
+    // Remove percentage numbers and symbols (e.g., "HTML 70%" becomes "HTML")
+    return skill.replace(/\s*\d+%?\s*$/, '').trim();
+};
+
+// Function to clean an array of skills
+const cleanSkills = (skills) => {
+    if (!skills || !Array.isArray(skills)) return [];
+    return skills.map(skill => cleanSkill(skill)).filter(skill => skill.length > 0);
+};
+
 export const getSkillMatchedContent = async (req, res) => {
     try {
         const userId = req.user._id;
@@ -11,7 +24,10 @@ export const getSkillMatchedContent = async (req, res) => {
         const currentUser = await User.findById(userId).select('skills');
         const userSkills = currentUser?.skills || [];
         
-        if (userSkills.length === 0) {
+        // Clean the user skills
+        const cleanedUserSkills = cleanSkills(userSkills);
+        
+        if (cleanedUserSkills.length === 0) {
             // If user has no skills, return recent content
             const [recentPeople, recentJobs, recentPosts] = await Promise.all([
                 User.find({
@@ -38,12 +54,13 @@ export const getSkillMatchedContent = async (req, res) => {
                 people: recentPeople,
                 jobs: recentJobs,
                 posts: recentPosts,
+                userSkills: cleanedUserSkills,
                 message: "No skills found, showing recent content"
             });
         }
 
-        // Create regex patterns for skill matching
-        const skillPatterns = userSkills.map(skill => new RegExp(skill, 'i'));
+        // Create regex patterns for skill matching using cleaned skills
+        const skillPatterns = cleanedUserSkills.map(skill => new RegExp(skill, 'i'));
 
         // Find people with matching skills
         const skillMatchedPeople = await User.find({
@@ -87,7 +104,7 @@ export const getSkillMatchedContent = async (req, res) => {
             people: skillMatchedPeople,
             jobs: skillMatchedJobs,
             posts: skillMatchedPosts,
-            userSkills: userSkills
+            userSkills: cleanedUserSkills
         });
     } catch (error) {
         console.error('Error fetching skill-matched content:', error);
@@ -103,7 +120,10 @@ export const getSkillMatchedPeople = async (req, res) => {
         const currentUser = await User.findById(userId).select('skills');
         const userSkills = currentUser?.skills || [];
         
-        if (userSkills.length === 0) {
+        // Clean the user skills
+        const cleanedUserSkills = cleanSkills(userSkills);
+        
+        if (cleanedUserSkills.length === 0) {
             // If user has no skills, return recent people
             const recentPeople = await User.find({
                 profilePicture: { $exists: true, $ne: null },
@@ -116,13 +136,13 @@ export const getSkillMatchedPeople = async (req, res) => {
             
             return res.status(200).json({
                 people: recentPeople,
-                userSkills: userSkills,
+                userSkills: cleanedUserSkills,
                 message: "No skills found, showing recent people"
             });
         }
 
-        // Create regex patterns for skill matching
-        const skillPatterns = userSkills.map(skill => new RegExp(skill, 'i'));
+        // Create regex patterns for skill matching using cleaned skills
+        const skillPatterns = cleanedUserSkills.map(skill => new RegExp(skill, 'i'));
 
         // Find people with matching skills
         const skillMatchedPeople = await User.find({
@@ -140,7 +160,7 @@ export const getSkillMatchedPeople = async (req, res) => {
 
         res.status(200).json({
             people: skillMatchedPeople,
-            userSkills: userSkills
+            userSkills: cleanedUserSkills
         });
     } catch (error) {
         console.error('Error fetching skill-matched people:', error);
@@ -156,7 +176,10 @@ export const getSkillMatchedJobs = async (req, res) => {
         const currentUser = await User.findById(userId).select('skills');
         const userSkills = currentUser?.skills || [];
         
-        if (userSkills.length === 0) {
+        // Clean the user skills
+        const cleanedUserSkills = cleanSkills(userSkills);
+        
+        if (cleanedUserSkills.length === 0) {
             // If user has no skills, return recent jobs
             const recentJobs = await Job.find()
                 .populate('createdBy', 'name avatar')
@@ -165,13 +188,13 @@ export const getSkillMatchedJobs = async (req, res) => {
             
             return res.status(200).json({
                 jobs: recentJobs,
-                userSkills: userSkills,
+                userSkills: cleanedUserSkills,
                 message: "No skills found, showing recent jobs"
             });
         }
 
-        // Create regex patterns for skill matching
-        const skillPatterns = userSkills.map(skill => new RegExp(skill, 'i'));
+        // Create regex patterns for skill matching using cleaned skills
+        const skillPatterns = cleanedUserSkills.map(skill => new RegExp(skill, 'i'));
 
         // Find jobs with matching skills
         const skillMatchedJobs = await Job.find({
@@ -188,7 +211,7 @@ export const getSkillMatchedJobs = async (req, res) => {
 
         res.status(200).json({
             jobs: skillMatchedJobs,
-            userSkills: userSkills
+            userSkills: cleanedUserSkills
         });
     } catch (error) {
         console.error('Error fetching skill-matched jobs:', error);
@@ -204,7 +227,10 @@ export const getSkillMatchedPosts = async (req, res) => {
         const currentUser = await User.findById(userId).select('skills');
         const userSkills = currentUser?.skills || [];
         
-        if (userSkills.length === 0) {
+        // Clean the user skills
+        const cleanedUserSkills = cleanSkills(userSkills);
+        
+        if (cleanedUserSkills.length === 0) {
             // If user has no skills, return recent posts
             const recentPosts = await Post.find()
                 .populate('author', 'name avatar username')
@@ -213,13 +239,13 @@ export const getSkillMatchedPosts = async (req, res) => {
             
             return res.status(200).json({
                 posts: recentPosts,
-                userSkills: userSkills,
+                userSkills: cleanedUserSkills,
                 message: "No skills found, showing recent posts"
             });
         }
 
-        // Create regex patterns for skill matching
-        const skillPatterns = userSkills.map(skill => new RegExp(skill, 'i'));
+        // Create regex patterns for skill matching using cleaned skills
+        const skillPatterns = cleanedUserSkills.map(skill => new RegExp(skill, 'i'));
 
         // Find posts with matching skills
         const skillMatchedPosts = await Post.find({
@@ -234,7 +260,7 @@ export const getSkillMatchedPosts = async (req, res) => {
 
         res.status(200).json({
             posts: skillMatchedPosts,
-            userSkills: userSkills
+            userSkills: cleanedUserSkills
         });
     } catch (error) {
         console.error('Error fetching skill-matched posts:', error);
@@ -285,8 +311,14 @@ export const searchAll = async (req, res) => {
             }).populate('author', 'name avatar username').limit(6)
         ]);
 
+        // Clean skills for people results
+        const peopleWithCleanSkills = people.map(user => ({
+            ...user.toObject(),
+            skills: cleanSkills(user.skills || [])
+        }));
+
         const results = {
-            people: people.filter(user => !user.privacySettings?.isProfilePrivate),
+            people: peopleWithCleanSkills.filter(user => !user.privacySettings?.isProfilePrivate),
             jobs,
             posts
         };

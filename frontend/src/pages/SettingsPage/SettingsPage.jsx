@@ -715,54 +715,122 @@ const SettingsPage = () => {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Skills (comma separated)
+                  Skills with Proficiency Levels
                 </label>
-                <textarea
-                  name="skills"
-                  value={formData.skills || (authUser.skills ? authUser.skills.join(', ') : '')}
-                  onChange={(e) => {
-                    // If the value is completely empty, use the original skills
-                    if (e.target.value === '') {
-                      setFormData(prev => ({
-                        ...prev,
-                        skills: authUser.skills || []
-                      }));
-                      return;
-                    }
-                    
-                    const skillsArray = e.target.value.split(',').map(skill => skill.trim()).filter(Boolean);
-                    setFormData(prev => ({
-                      ...prev,
-                      skills: e.target.value.includes(',') ? skillsArray : e.target.value
-                    }));
-                  }}
-                  rows="3"
-                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary"
-                  placeholder="e.g. JavaScript, React, Node.js, Project Management"
-                ></textarea>
-                <p className="mt-1 text-sm text-gray-500">
-                  Enter your skills separated by commas. These will be displayed on your profile and help others understand your expertise.
-                </p>
+                <div className="space-y-4">
+                  {/* Skills Input */}
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="e.g. HTML 70%, JavaScript 85%, React 90%"
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary"
+                      value={formData.skillsInput || ''}
+                      onChange={(e) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          skillsInput: e.target.value
+                        }));
+                      }}
+                    />
+                    <p className="mt-1 text-sm text-gray-500">
+                      Enter skills with percentages (e.g., "HTML 70%", "JavaScript 85%"). Separate multiple skills with commas.
+                    </p>
+                  </div>
+                  
+                  {/* Add Skill Button */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (formData.skillsInput && formData.skillsInput.trim()) {
+                        const newSkill = formData.skillsInput.trim();
+                        const currentSkills = formData.skills || authUser.skills || [];
+                        
+                        // Check if skill already exists
+                        const skillExists = currentSkills.some(skill => 
+                          skill.toLowerCase().split(' ')[0] === newSkill.toLowerCase().split(' ')[0]
+                        );
+                        
+                        if (skillExists) {
+                          toast.error("This skill already exists");
+                          return;
+                        }
+                        
+                        setFormData(prev => ({
+                          ...prev,
+                          skills: [...currentSkills, newSkill],
+                          skillsInput: ''
+                        }));
+                      }
+                    }}
+                    className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors"
+                  >
+                    Add Skill
+                  </button>
+                </div>
               </div>
               
-              <div className="mt-4">
-                <h3 className="font-medium mb-2">Your Skills</h3>
-                <div className="flex flex-wrap gap-2">
-                  {(typeof formData.skills === 'string' 
-                    ? (formData.skills.includes(',') ? formData.skills.split(',').map(s => s.trim()).filter(Boolean) : [formData.skills]) 
-                    : (formData.skills || authUser.skills || [])
-                  ).map((skill, index) => (
-                    <span key={index} className="bg-gray-100 px-3 py-1 rounded-full text-sm">
-                      {skill}
-                    </span>
-                  ))}
+              <div className="mt-6">
+                <h3 className="font-medium mb-4">Your Skills</h3>
+                <div className="space-y-3">
+                  {(formData.skills || authUser.skills || []).map((skill, index) => {
+                    // Parse skill and percentage
+                    const skillMatch = skill.match(/^(.+?)\s*(\d+)%?$/);
+                    const skillName = skillMatch ? skillMatch[1].trim() : skill;
+                    const percentage = skillMatch ? parseInt(skillMatch[2]) : null;
+                    
+                    return (
+                      <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-medium">{skillName}</span>
+                            {percentage && <span className="text-sm text-gray-600">{percentage}%</span>}
+                          </div>
+                          {percentage && (
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                                style={{ width: `${percentage}%` }}
+                              ></div>
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const currentSkills = formData.skills || authUser.skills || [];
+                            const updatedSkills = currentSkills.filter((_, i) => i !== index);
+                            setFormData(prev => ({
+                              ...prev,
+                              skills: updatedSkills
+                            }));
+                          }}
+                          className="ml-3 text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                          </svg>
+                        </button>
+                      </div>
+                    );
+                  })}
                   
-                  {(typeof formData.skills === 'string' 
-                    ? (formData.skills.includes(',') ? formData.skills.split(',').map(s => s.trim()).filter(Boolean) : [formData.skills]) 
-                    : (formData.skills || authUser.skills || [])
-                  ).length === 0 && (
-                    <span className="text-gray-500">No skills added yet</span>
+                  {(formData.skills || authUser.skills || []).length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      No skills added yet. Add your skills with proficiency levels above.
+                    </div>
                   )}
+                </div>
+              </div>
+              
+              {/* Skills Examples */}
+              <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                <h4 className="font-medium text-blue-800 mb-2">Examples:</h4>
+                <div className="text-sm text-blue-700 space-y-1">
+                  <p>• HTML 70%</p>
+                  <p>• JavaScript 85%</p>
+                  <p>• React 90%</p>
+                  <p>• Node.js 75%</p>
+                  <p>• Project Management 80%</p>
                 </div>
               </div>
             </div>

@@ -1,14 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
-import { Search, Users, Briefcase, FileText, Building, MapPin, TrendingUp, Star, Calendar, MessageCircle, Heart, Share2, ArrowRight, Sparkles } from 'lucide-react';
+import { Search, Users, Briefcase, FileText, Building, MapPin, TrendingUp, Star, Calendar, MessageCircle, Heart, Share2, ArrowRight, Sparkles, Plus } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { axiosInstance } from '../../lib/axios';
 import UserCard from '../../components/UserCard/UserCard';
 import ErrorBoundary from '../../components/ErrorBoundary/ErrorBoundary';
+import JobPostingForm from '../../components/JobPostingForm/JobPostingForm';
 
 const SearchPageContent = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedFilter, setSelectedFilter] = useState('all');
+    const [showJobForm, setShowJobForm] = useState(false);
     const [jobFilters, setJobFilters] = useState({
         skill: '',
         location: '',
@@ -16,6 +18,19 @@ const SearchPageContent = () => {
         employmentType: '',
         remote: false
     });
+
+    // Function to clean skills by removing percentage numbers and symbols
+    const cleanSkill = (skill) => {
+        if (!skill) return '';
+        // Remove percentage numbers and symbols (e.g., "HTML 70%" becomes "HTML")
+        return skill.replace(/\s*\d+%?\s*$/, '').trim();
+    };
+
+    // Function to clean an array of skills
+    const cleanSkills = (skills) => {
+        if (!skills || !Array.isArray(skills)) return [];
+        return skills.map(skill => cleanSkill(skill)).filter(skill => skill.length > 0);
+    };
 
     // Recommended skills based on search query
     const getRecommendedSkills = (query) => {
@@ -123,7 +138,7 @@ const SearchPageContent = () => {
                             Your Skills
                         </h3>
                         <div className="flex flex-wrap gap-2">
-                            {content.userSkills.map((skill, index) => (
+                            {cleanSkills(content.userSkills).map((skill, index) => (
                                 <span
                                     key={index}
                                     className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium border border-blue-300"
@@ -165,7 +180,7 @@ const SearchPageContent = () => {
                                             <p className="text-xs text-gray-500">{user.location}</p>
                                             {user.skills && user.skills.length > 0 && (
                                                 <div className="flex flex-wrap gap-1 mt-1">
-                                                    {user.skills.slice(0, 2).map((skill, index) => (
+                                                    {cleanSkills(user.skills).slice(0, 2).map((skill, index) => (
                                                         <span key={index} className="px-1 py-0.5 bg-blue-50 text-blue-700 text-xs rounded">
                                                             {skill}
                                                         </span>
@@ -213,7 +228,7 @@ const SearchPageContent = () => {
                                                     <div className="flex flex-wrap gap-1 mt-2">
                                                         {job.skill.split(',').slice(0, 3).map((skill, index) => (
                                                             <span key={index} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded">
-                                                                {skill.trim()}
+                                                                {cleanSkill(skill.trim())}
                                                             </span>
                                                         ))}
                                                     </div>
@@ -310,7 +325,7 @@ const SearchPageContent = () => {
                                                 <p className="text-xs text-gray-500">{user.location}</p>
                                                 {user.skills && user.skills.length > 0 && (
                                                     <div className="flex flex-wrap gap-1 mt-1">
-                                                        {user.skills.slice(0, 2).map((skill, index) => (
+                                                        {cleanSkills(user.skills).slice(0, 2).map((skill, index) => (
                                                             <span key={index} className="px-1 py-0.5 bg-blue-50 text-blue-700 text-xs rounded">
                                                                 {skill}
                                                             </span>
@@ -346,7 +361,7 @@ const SearchPageContent = () => {
                                                         <div className="flex flex-wrap gap-1 mt-2">
                                                             {job.skill.split(',').slice(0, 3).map((skill, index) => (
                                                                 <span key={index} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded">
-                                                                    {skill.trim()}
+                                                                    {cleanSkill(skill.trim())}
                                                                 </span>
                                                             ))}
                                                         </div>
@@ -434,304 +449,85 @@ const SearchPageContent = () => {
         );
     };
 
-    const renderSearchResults = () => {
-        if (!searchQuery.trim()) {
-            return renderSkillMatchedSection();
-        }
-        
-        if (isLoading) {
-            return (
-                <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                    <span className="ml-3 text-gray-600">Searching...</span>
-                </div>
-            );
-        }
-
-        if (!searchResults || searchResults.length === 0) {
-            return (
-                <div className="text-center py-12">
-                    <Search className="mx-auto text-gray-400 mb-4" size={48} />
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No results found</h3>
-                    <p className="text-gray-600">Try adjusting your search terms or filters</p>
-                </div>
-            );
-        }
-
-        const renderPeopleResults = () => (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {searchResults.map(user => (
-                    <div key={user._id} className="bg-white rounded-lg shadow-sm border p-6 hover:shadow-md transition-shadow">
-                        <UserCard user={user} />
-                    </div>
-                ))}
-            </div>
-        );
-
-        const renderJobsResults = () => (
-            <div className="space-y-4">
-                {searchResults.map(job => (
-                    <Link to={`/jobs/${job._id}`} key={job._id} className="block">
-                        <div className="bg-white rounded-lg shadow-sm border p-6 hover:shadow-md transition-shadow border-l-4 border-blue-500">
-                            <div className="flex justify-between items-start">
-                                <div className="flex-1">
-                                    <h3 className="font-semibold text-lg text-gray-900 mb-2">{job.title}</h3>
-                                    <p className="text-gray-600 mb-3">{job.description?.substring(0, 150)}...</p>
-                                    <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
-                                        <span className="flex items-center">
-                                            <MapPin size={16} className="mr-1" />
-                                            {job.location}
-                                        </span>
-                                        <span className="flex items-center">
-                                            <Briefcase size={16} className="mr-1" />
-                                            {job.type}
-                                        </span>
-                                        <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
-                                            ${job.package}
-                                        </span>
-                                    </div>
-                                    <div className="flex flex-wrap gap-2">
-                                        {job.skill?.split(',').map((skill, index) => (
-                                            <span key={index} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded">
-                                                {skill.trim()}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-                                <div className="flex-shrink-0 ml-4">
-                                    <Star className="text-yellow-400" size={20} />
-                                </div>
-                            </div>
-                        </div>
-                    </Link>
-                ))}
-            </div>
-        );
-
-        const renderPostsResults = () => (
-            <div className="space-y-4">
-                {searchResults.map(post => (
-                    <Link to={`/posts/${post._id}`} key={post._id} className="block">
-                        <div className="bg-white rounded-lg shadow-sm border p-6 hover:shadow-md transition-shadow">
-                            <div className="flex items-start space-x-4">
-                                <img
-                                    src={post.author?.profilePicture || "/avatar.png"}
-                                    alt={post.author?.name}
-                                    className="w-12 h-12 rounded-full"
-                                />
-                                <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <h4 className="font-semibold text-gray-900">{post.author?.name}</h4>
-                                        <span className="text-gray-500">•</span>
-                                        <span className="text-sm text-gray-500">{new Date(post.createdAt).toLocaleDateString()}</span>
-                                    </div>
-                                    <h3 className="font-semibold text-lg mb-2">{post.title || "Post"}</h3>
-                                    <p className="text-gray-700 mb-4 line-clamp-3">{post.content}</p>
-                                    <div className="flex items-center gap-6 text-sm text-gray-500">
-                                        <span className="flex items-center">
-                                            <Heart size={16} className="mr-1" />
-                                            {post.likes?.length || 0} likes
-                                        </span>
-                                        <span className="flex items-center">
-                                            <MessageCircle size={16} className="mr-1" />
-                                            {post.comments?.length || 0} comments
-                                        </span>
-                                        <span className="flex items-center">
-                                            <Share2 size={16} className="mr-1" />
-                                            Share
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </Link>
-                ))}
-            </div>
-        );
-
-        switch (selectedFilter) {
-            case 'people':
-                return renderPeopleResults();
-            case 'jobs':
-                return renderJobsResults();
-            case 'posts':
-                return renderPostsResults();
-            case 'all':
-                return (
-                    <div className="space-y-8">
-                        {searchResults.people && searchResults.people.length > 0 && (
-                            <div>
-                                <h3 className="text-lg font-semibold mb-4 flex items-center">
-                                    <Users className="mr-2 text-blue-600" size={20} />
-                                    People ({searchResults.people.length})
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {searchResults.people.slice(0, 6).map(user => (
-                                        <div key={user._id} className="bg-white rounded-lg shadow-sm border p-6 hover:shadow-md transition-shadow">
-                                            <UserCard user={user} />
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                        {searchResults.jobs && searchResults.jobs.length > 0 && (
-                            <div>
-                                <h3 className="text-lg font-semibold mb-4 flex items-center">
-                                    <Briefcase className="mr-2 text-green-600" size={20} />
-                                    Jobs ({searchResults.jobs.length})
-                                </h3>
-                                {renderJobsResults()}
-                            </div>
-                        )}
-                        {searchResults.posts && searchResults.posts.length > 0 && (
-                            <div>
-                                <h3 className="text-lg font-semibold mb-4 flex items-center">
-                                    <FileText className="mr-2 text-purple-600" size={20} />
-                                    Posts ({searchResults.posts.length})
-                                </h3>
-                                {renderPostsResults()}
-                            </div>
-                        )}
-                    </div>
-                );
-            default:
-                return null;
-        }
-    };
-
-    const handleFilterChange = (field, value) => {
-        setJobFilters(prev => ({
-            ...prev,
-            [field]: value
-        }));
-    };
-
+    // Main return statement for SearchPageContent
     return (
-        <div className="max-w-7xl mx-auto px-4 py-8">
-            {/* Hero Section */}
-            <div className="text-center mb-8">
-                <h1 className="text-3xl font-bold text-gray-900 mb-4">Find what you're looking for</h1>
-                <p className="text-gray-600 text-lg">Search for people, jobs, posts, and more</p>
-            </div>
-
-            <div className="flex gap-6">
-                {/* Filters Sidebar */}
-                <div className="w-80 flex-shrink-0">
-                    <div className="bg-white rounded-lg shadow-sm border p-6 sticky top-4">
-                        <h2 className="font-semibold text-lg mb-4">Search Filters</h2>
-                        
-                        {/* Search Type Filter */}
-                        <div className="mb-6">
-                            <label className="block text-sm font-medium text-gray-700 mb-3">Search Type</label>
-                            <div className="space-y-2">
-                                {[
-                                    { key: 'all', label: 'All', icon: Search },
-                                    { key: 'people', label: 'People', icon: Users },
-                                    { key: 'jobs', label: 'Jobs', icon: Briefcase },
-                                    { key: 'posts', label: 'Posts', icon: FileText }
-                                ].map(({ key, label, icon: Icon }) => (
-                                    <button
-                                        key={key}
-                                        onClick={() => setSelectedFilter(key)}
-                                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
-                                            selectedFilter === key 
-                                                ? 'bg-blue-50 text-blue-700 border border-blue-200' 
-                                                : 'hover:bg-gray-50'
-                                        }`}
-                                    >
-                                        <Icon size={18} />
-                                        {label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Job Filters */}
-                        {selectedFilter === 'jobs' && (
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Employment Type</label>
-                                    <select
-                                        value={jobFilters.employmentType}
-                                        onChange={(e) => handleFilterChange('employmentType', e.target.value)}
-                                        className="w-full border rounded-lg p-2 text-sm"
-                                    >
-                                        <option value="">All Types</option>
-                                        <option value="Full-time">Full-time</option>
-                                        <option value="Part-time">Part-time</option>
-                                        <option value="Contract">Contract</option>
-                                        <option value="Internship">Internship</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Skills</label>
-                                    <input
-                                        type="text"
-                                        value={jobFilters.skill}
-                                        onChange={(e) => handleFilterChange('skill', e.target.value)}
-                                        placeholder="e.g. JavaScript, React"
-                                        className="w-full border rounded-lg p-2 text-sm"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                                    <input
-                                        type="text"
-                                        value={jobFilters.location}
-                                        onChange={(e) => handleFilterChange('location', e.target.value)}
-                                        placeholder="e.g. New York, Remote"
-                                        className="w-full border rounded-lg p-2 text-sm"
-                                    />
-                                </div>
-                                <div className="flex items-center">
-                                    <input
-                                        type="checkbox"
-                                        id="remote"
-                                        checked={jobFilters.remote}
-                                        onChange={(e) => handleFilterChange('remote', e.target.checked)}
-                                        className="mr-2"
-                                    />
-                                    <label htmlFor="remote" className="text-sm text-gray-700">Remote Only</label>
-                                </div>
-                            </div>
-                        )}
-                    </div>
+        <div className="min-h-screen bg-gray-50">
+            <div className="max-w-7xl mx-auto px-4 py-8">
+                {/* Search Header */}
+                <div className="mb-8">
+                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Search</h1>
+                    <p className="text-gray-600">Find people, jobs, and posts that match your skills</p>
                 </div>
 
-                {/* Main Content */}
-                <div className="flex-1">
-                    {/* Search Bar */}
-                    <div className="relative mb-6">
-                        <input
-                            type="text"
-                            placeholder="Search for people, jobs, posts, skills..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
-                        />
-                        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={24} />
-                    </div>
-
-                    {/* Recommended Skills */}
-                    {searchQuery && renderRecommendedSkills()}
-
-                    {/* Search Results */}
-                    <div className="bg-white rounded-lg shadow-sm border">
-                        <div className="p-6">
-                            {searchQuery && (
-                                <div className="flex items-center justify-between mb-6">
-                                    <h2 className="text-xl font-semibold text-gray-900">
-                                        Results for "{searchQuery}"
-                                    </h2>
-                                    <span className="text-sm text-gray-500">
-                                        {searchResults?.length || 0} results
-                                    </span>
-                                </div>
-                            )}
-                            {renderSearchResults()}
+                {/* Search Bar */}
+                <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
+                    <div className="flex flex-col lg:flex-row gap-4">
+                        <div className="flex-1">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                                <input
+                                    type="text"
+                                    placeholder="Search for skills, people, jobs, or posts..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                            </div>
+                        </div>
+                        <div className="flex gap-2">
+                            <select
+                                value={selectedFilter}
+                                onChange={(e) => setSelectedFilter(e.target.value)}
+                                className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                                <option value="all">All</option>
+                                <option value="people">People</option>
+                                <option value="jobs">Jobs</option>
+                                <option value="posts">Posts</option>
+                            </select>
+                            <button
+                                onClick={() => setShowJobForm(true)}
+                                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                            >
+                                <Plus size={20} />
+                                Submit Job
+                            </button>
                         </div>
                     </div>
                 </div>
+
+                {/* Recommended Skills */}
+                {searchQuery && renderRecommendedSkills()}
+
+                {/* Search Results or Skill-Matched Content */}
+                {searchQuery ? (
+                    <div className="space-y-6">
+                        {isLoading ? (
+                            <div className="text-center py-8">
+                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                                <p className="mt-4 text-gray-600">Searching...</p>
+                            </div>
+                        ) : searchResults ? (
+                            <div className="space-y-6">
+                                {/* Search Results Content */}
+                                {renderSkillMatchedSection()}
+                            </div>
+                        ) : null}
+                    </div>
+                ) : (
+                    renderSkillMatchedSection()
+                )}
+
+                {/* Job Posting Form Modal */}
+                <JobPostingForm 
+                    isOpen={showJobForm} 
+                    onClose={() => setShowJobForm(false)}
+                    onPosted={() => {
+                        setShowJobForm(false);
+                        // Refresh the page or invalidate queries to show the new job
+                        window.location.reload();
+                    }}
+                />
             </div>
         </div>
     );
