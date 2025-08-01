@@ -59,6 +59,7 @@ export const updateProfile = async (req, res) => {
 			"headline",
 			"about",
 			"location",
+			"role",
 			"skills",
 			"experience",
 			"education",

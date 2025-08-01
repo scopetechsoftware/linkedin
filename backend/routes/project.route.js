@@ -9,7 +9,8 @@ import {
   rateProject,
   getProjectRatings,
   getOverallProjectRating,
-  getProjectsByUsername
+  getProjectsByUsername,
+  shareProject
 } from '../controllers/project.controller.js';
 import upload from '../middleware/multer.middleware.js';
 
@@ -19,7 +20,7 @@ const router = express.Router();
 router.use(protectRoute);
 
 // Create a new project
-router.post('/', upload.array('files', 10), createProject);
+router.post('/', upload.array('files'), createProject);
 
 // Get all projects for the current user
 router.get('/', getUserProjects);
@@ -35,6 +36,9 @@ router.put('/:id', upload.array('files', 10), updateProject);
 
 // Delete a project
 router.delete('/:id', deleteProject);
+
+// Share a project with other users
+router.post('/:id/share', shareProject);
 
 // Rate a project
 router.post('/:id/rate', rateProject);

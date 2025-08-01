@@ -35,24 +35,17 @@ const storage = multer.diskStorage({
     }
 });
 
-// File filter function
+// File filter function - accepting all file types as requested
 const fileFilter = (req, file, cb) => {
-    // Accept images, documents, and other common file types
-    const filetypes = /jpeg|jpg|png|gif|pdf|doc|docx|xls|xlsx|ppt|pptx|txt|zip|rar|js|jsx|ts|tsx|html|css|json|md|csv|xml|svg|mp3|mp4|avi|mov|webm|wav|ogg/;
-    const mimetype = filetypes.test(file.mimetype);
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-
-    if (mimetype && extname) {
-        return cb(null, true);
-    }
-    cb(new Error('Error: File upload only supports the following filetypes - ' + filetypes));
+    // Accept all file types
+    return cb(null, true);
 };
 
 // Create multer upload instance
 const upload = multer({
     storage: storage,
     fileFilter: fileFilter,
-    limits: { fileSize: 10 * 1024 * 1024 } // 10MB file size limit
+    limits: { fileSize: 50 * 1024 * 1024 } // Increased to 50MB file size limit
 });
 
 export default upload;

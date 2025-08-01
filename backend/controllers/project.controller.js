@@ -6,43 +6,83 @@ import User from "../models/user.model.js";
 // Create a new project
 export const createProject = async (req, res) => {
 	try {
-		const { name, description, gitlink, projecturl, type, collaborators } = req.body;
-		
-		// Create a new project
-		const newProject = new Project({
-			name,
-			description,
-			gitlink,
-			projecturl,
-			type,
-			owner: req.user._id,
-			collaborators: collaborators ? JSON.parse(collaborators) : [],
-		});
-
-		// Handle file uploads if any (using multer)
-		// If req.body.files is a stringified array, parse it safely
-if (req.body.files) {
-  try {
-    const parsedFiles = JSON.parse(req.body.files);
-    if (Array.isArray(parsedFiles)) {
-      newProject.files = parsedFiles;
+	  const { name, description, gitlink, projecturl, type, collaborators } = req.body;
+	  
+	  // Format and validate projecturl if it exists
+	  let formattedProjectUrl = projecturl || "";
+	  if (formattedProjectUrl && typeof formattedProjectUrl === 'string' && formattedProjectUrl.trim() !== '') {
+		formattedProjectUrl = formattedProjectUrl.trim();
+		// Add https:// prefix if missing
+		if (!formattedProjectUrl.startsWith('http://') && !formattedProjectUrl.startsWith('https://')) {
+		  formattedProjectUrl = 'https://' + formattedProjectUrl;
+		}
+	  }
+	  
+	  const newProject = new Project({
+		name,
+		description,
+		gitlink,
+		projecturl: formattedProjectUrl, // Use the formatted URL
+		type,
+		owner: req.user._id,
+		collaborators: collaborators ? JSON.parse(collaborators) : [],
+		files: [] // Initialize files as an empty array
+	  });
+  
+	  // Handle file uploads
+  if (req.files && req.files.length > 0) {
+    try {
+      // Initialize files as an empty array
+      newProject.files = [];
+      
+      // Process each file individually
+      for (const file of req.files) {
+        try {
+          // Create a file document that matches the schema
+          newProject.files.push({
+            name: file.originalname,
+            path: file.path.replace(/.*uploads[\\/]/, ''),
+            type: file.mimetype,
+            size: file.size
+          });
+        } catch (fileError) {
+          console.error("Error processing file:", file.originalname, fileError);
+          // Continue with other files even if one fails
+        }
+      }
+      console.log('Processed files:', newProject.files.length);
+    } catch (fileProcessingError) {
+      console.error("Error processing files:", fileProcessingError);
+      // Continue with project creation even if file processing fails
     }
-  } catch (err) {
-    console.error("Error parsing files:", err);
   }
-}
-
-
-		// Save the project
-		await newProject.save();
-		
-		res.status(201).json(newProject);
+  
+	  console.log('newProject.files:', newProject.files);
+	  await newProject.save();
+	  res.status(201).json(newProject);
 	} catch (error) {
-		console.error("Error creating project:", error);
-		res.status(500).json({ message: error.message || "Server error" });
+	  console.error("Error creating project:", error);
+	  
+	  // Handle specific Mongoose errors
+	  if (error.name === 'ValidationError') {
+		// Handle Mongoose validation errors
+		const validationErrors = Object.values(error.errors).map(err => err.message);
+		return res.status(400).json({ message: validationErrors.join(', ') });
+	  } else if (error.name === 'CastError') {
+		// Handle Mongoose cast errors with more details
+		return res.status(400).json({ 
+		  message: `Invalid data format for field: ${error.path}`, 
+		  details: error.message 
+		});
+	  } else if (error.code === 11000) {
+		// Handle duplicate key errors
+		return res.status(400).json({ message: 'A project with this information already exists' });
+	  }
+	  
+	  // Generic error response
+	  res.status(500).json({ message: error.message || "Server error" });
 	}
-};
-
+  };
 // Get all projects for the current user
 export const getUserProjects = async (req, res) => {
 	try {
@@ -116,31 +156,52 @@ export const updateProject = async (req, res) => {
 		
 		const { name, description, gitlink, projecturl, type, collaborators } = req.body;
 		
+		// Format and validate projecturl if it exists
+		let formattedProjectUrl = projecturl || "";
+		if (formattedProjectUrl && typeof formattedProjectUrl === 'string' && formattedProjectUrl.trim() !== '') {
+			formattedProjectUrl = formattedProjectUrl.trim();
+			// Add https:// prefix if missing
+			if (!formattedProjectUrl.startsWith('http://') && !formattedProjectUrl.startsWith('https://')) {
+				formattedProjectUrl = 'https://' + formattedProjectUrl;
+			}
+		}
+
 		// Update project fields
 		if (name) project.name = name;
 		if (description) project.description = description;
 		if (gitlink) project.gitlink = gitlink;
-		if (projecturl) project.projecturl = projecturl;
+		if (projecturl) project.projecturl = formattedProjectUrl; // Use the formatted URL
 		if (type) project.type = type;
 		if (collaborators) project.collaborators = collaborators ? JSON.parse(collaborators) : project.collaborators;
 		
 		// Handle file uploads if any (using multer)
 		if (req.files && req.files.length > 0) {
-			const uploadedFiles = [];
-			for (const file of req.files) {
-				try {
-					uploadedFiles.push({
-						name: file.originalname,
-						path: file.path.replace(/.*uploads[\\/]/, ''), // relative to uploads/
-						type: file.mimetype,
-						size: file.size,
-					});
-				} catch (fileError) {
-					console.error("Error processing file:", fileError, file);
-					// Continue with other files even if one fails
+			try {
+				// If no files array exists, create one
+				if (!project.files) {
+					project.files = [];
 				}
+				
+				// Process each file individually
+				for (const file of req.files) {
+					try {
+						// Create a file document that matches the schema
+						project.files.push({
+							name: file.originalname,
+							path: file.path.replace(/.*uploads[\\/]/, ''), // relative to uploads/
+							type: file.mimetype,
+							size: file.size
+						});
+					} catch (fileError) {
+						console.error("Error processing file:", file.originalname, fileError);
+						// Continue with other files even if one fails
+					}
+				}
+				console.log('Processed files for update:', req.files.length);
+			} catch (fileProcessingError) {
+				console.error("Error processing files during update:", fileProcessingError);
+				// Continue with project update even if file processing fails
 			}
-			project.files = [...(project.files || []), ...uploadedFiles];
 		}
 		
 		// Save the updated project
@@ -149,6 +210,24 @@ export const updateProject = async (req, res) => {
 		res.json(project);
 	} catch (error) {
 		console.error("Error updating project:", error);
+		
+		// Handle specific Mongoose errors
+		if (error.name === 'ValidationError') {
+			// Handle Mongoose validation errors
+			const validationErrors = Object.values(error.errors).map(err => err.message);
+			return res.status(400).json({ message: validationErrors.join(', ') });
+		} else if (error.name === 'CastError') {
+			// Handle Mongoose cast errors with more details
+			return res.status(400).json({ 
+				message: `Invalid data format for field: ${error.path}`, 
+				details: error.message 
+			});
+		} else if (error.code === 11000) {
+			// Handle duplicate key errors
+			return res.status(400).json({ message: 'A project with this information already exists' });
+		}
+		
+		// Generic error response
 		res.status(500).json({ message: error.message || "Server error" });
 	}
 };
@@ -279,6 +358,70 @@ export const getOverallProjectRating = async (req, res) => {
 
 	} catch (error) {
 		console.error("Error calculating overall rating:", error);
+		res.status(500).json({ message: "Server error" });
+	}
+};
+
+// Share a project with other users via REST API
+export const shareProject = async (req, res) => {
+	try {
+		const { id: projectId } = req.params;
+		const { userIds } = req.body;
+		
+		if (!projectId || !userIds || !Array.isArray(userIds) || userIds.length === 0) {
+			return res.status(400).json({ message: "Missing projectId or userIds" });
+		}
+
+		// Fetch project details
+		const project = await Project.findById(projectId)
+			.populate("collaborators", "_id name profilePicture")
+			.lean();
+
+		if (!project) {
+			return res.status(404).json({ message: "Project not found" });
+		}
+
+		// Check if user is the owner
+		if (project.owner.toString() !== req.user._id.toString()) {
+			return res.status(403).json({ message: "Not authorized to share this project" });
+		}
+
+		// Fetch sender info
+		const sender = await User.findById(req.user._id).select("_id name profilePicture").lean();
+
+		// Process each recipient
+		const results = await Promise.all(userIds.map(async (userId) => {
+			try {
+				// Create notification for the recipient
+				const notification = new Notification({
+					recipient: userId,
+					type: "projectShared",
+					relatedUser: req.user._id,
+					relatedProject: projectId
+				});
+				await notification.save();
+
+				// Add user as collaborator if not already
+				if (!project.collaborators.some(collab => collab._id.toString() === userId.toString())) {
+					await Project.findByIdAndUpdate(projectId, {
+						$addToSet: { collaborators: userId }
+					});
+				}
+
+				return { userId, success: true };
+			} catch (error) {
+				console.error(`Error sharing project with user ${userId}:`, error);
+				return { userId, success: false, error: error.message };
+			}
+		}));
+
+		// Return results
+		res.status(200).json({
+			message: "Project shared successfully",
+			results
+		});
+	} catch (error) {
+		console.error("Error sharing project:", error);
 		res.status(500).json({ message: "Server error" });
 	}
 };

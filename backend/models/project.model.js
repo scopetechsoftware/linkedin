@@ -25,11 +25,11 @@ const projectSchema = new mongoose.Schema(
 		},
 		files: [
 			{
-				name: String,
-				path: String,
-				type: String,
-				size: Number,
-			},
+				name: { type: String },
+				path: { type: String },
+				type: { type: String },
+				size: { type: Number }
+			}
 		],
 		owner: {
 			type: mongoose.Schema.Types.ObjectId,

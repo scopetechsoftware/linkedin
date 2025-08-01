@@ -18,6 +18,7 @@ import searchRoutes from './routes/search.route.js';
 import { connectDB } from "./lib/db.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import { Chat, Message } from "./models/chat.model.js";
 
 const app = express();
 const server = createServer(app);
@@ -67,6 +68,9 @@ if (process.env.NODE_ENV !== "production") {
 app.use(express.json({ limit: "50mb" }));
 app.use(cookieParser());
 
+// Serve static files from the uploads directory
+app.use('/uploads', express.static('backend/uploads'));
+
 // API routes
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
@@ -91,6 +95,56 @@ io.on("connection", (socket) => {
     // Handle disconnection
     socket.on("disconnect", () => {
         console.log("A socket disconnected!", socket.user?._id);
+    });
+    
+    // Direct test message handler (for debugging purposes)
+    socket.on("test_message", async (data) => {
+        try {
+            console.log("Received test message:", data);
+            
+            const { chatId, content } = data;
+            const senderId = socket.user._id;
+            
+            if (!content || content.trim() === "") {
+                socket.emit("test_message_error", { message: "Message content cannot be empty" });
+                return;
+            }
+            
+            // Verify the chat exists
+            const chat = await Chat.findById(chatId);
+            if (!chat) {
+                socket.emit("test_message_error", { message: "Chat not found" });
+                return;
+            }
+            
+            // Create and save the message
+            const newMessage = new Message({
+                sender: senderId,
+                content,
+                chatId,
+            });
+            
+            await newMessage.save();
+            
+            // Update the chat's lastMessage
+            chat.lastMessage = newMessage._id;
+            await chat.save();
+            
+            // Populate sender info before returning
+            await newMessage.populate("sender", "name username profilePicture");
+            
+            console.log("Test message saved successfully:", newMessage);
+            
+            // Emit the message to all participants in the chat
+            chat.participants.forEach((participantId) => {
+                io.to(participantId.toString()).emit("receive_message", newMessage);
+            });
+            
+            socket.emit("test_message_success", newMessage);
+        } catch (error) {
+            console.error("Error in test_message handler:", error);
+            socket.emit("test_message_error", { message: "Server error" });
+        }
     });
 
     // Register the share_project handler FIRST

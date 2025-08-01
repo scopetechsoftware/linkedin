@@ -61,7 +61,13 @@ export const getAffiliations = async (req, res) => {
             .populate("affiliated", "name email username profilePicture headline")
             .sort({ startDate: -1 }); // Sort by startDate descending
 
-        res.json(affiliations);
+        res.json(affiliations.map(affiliation => {
+            const affiliationObj = affiliation.toObject();
+            return {
+                ...affiliationObj,
+                isActive: affiliation.isActive
+            };
+        }));
     } catch (error) {
         console.error("Error in getAffiliations:", error);
         res.status(500).json({ message: "Server error" });
@@ -75,7 +81,13 @@ export const getMyAffiliations = async (req, res) => {
             .populate("affiliator", "name email username profilePicture headline")
             .sort({ startDate: -1 }); // Sort by startDate descending
 
-        res.json(affiliations);
+        res.json(affiliations.map(affiliation => {
+            const affiliationObj = affiliation.toObject();
+            return {
+                ...affiliationObj,
+                isActive: affiliation.isActive
+            };
+        }));
     } catch (error) {
         console.error("Error in getMyAffiliations:", error);
         res.status(500).json({ message: "Server error" });
@@ -178,7 +190,13 @@ export const getAffiliationsByUsername = async (req, res) => {
             return res.json([]);
         }
         
-        const affiliations = await Affiliation.find({ affiliated: user._id })
+        // Only show active affiliations unless the requester is the profile owner
+        const query = { affiliated: user._id };
+        if (req.user._id.toString() !== user._id.toString()) {
+            query.isActive = true;
+        }
+        
+        const affiliations = await Affiliation.find(query)
             .populate("affiliator", "name email username profilePicture headline")
             .sort({ startDate: -1 });
         res.json(affiliations);
