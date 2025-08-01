@@ -37,6 +37,12 @@ const ProfilePage = () => {
 		queryFn: () => axiosInstance.get(`/affiliations/affiliators/${username}`),
 	});
 
+	// Fetch users affiliated with this profile (for organizations/companies)
+	const { data: affiliatedUsers, isLoading: isAffiliatedUsersLoading } = useQuery({
+		queryKey: ["affiliatedUsers", username],
+		queryFn: () => axiosInstance.get(`/affiliations/affiliated/${username}`),
+	});
+
 	// Fetch jobs by this user
 	const { data: userJobs, isLoading: isJobsLoading } = useQuery({
 		queryKey: ["userJobs", username],
@@ -256,9 +262,9 @@ const ProfilePage = () => {
 					) : null}
 
 					{/* Affiliators Section (Organizations that the user is affiliated with) */}
-					{isAffiliatorsLoading ? (
+					{isAffiliationsLoading ? (
 						<div className="bg-white rounded-lg shadow p-6 text-center my-4">Loading affiliators...</div>
-					) : userAffiliators?.data?.length > 0 ? (
+					) : userAffiliations?.data?.length > 0 ? (
 						<div className="bg-white rounded-lg shadow p-6 my-4">
 							<div className="flex items-center justify-between mb-4">
 								<h2 className="text-xl font-bold flex items-center">
@@ -266,14 +272,14 @@ const ProfilePage = () => {
 									Organizations & Companies
 								</h2>
 								<Link 
-									to={`/affiliations/affiliators/${username}`}
+									to={`/affiliations/user/${username}`}
 									className="text-blue-600 hover:text-blue-800 text-sm font-medium"
 								>
-									View All ({userAffiliators.data.length})
+									View All ({userAffiliations.data.length})
 								</Link>
 							</div>
 							<div className="space-y-4">
-								{userAffiliators.data.slice(0, 3).map((affiliation) => {
+								{userAffiliations.data.slice(0, 3).map((affiliation) => {
 									const org = affiliation.affiliator;
 									const getOrgType = (role) => {
 										switch (role) {
@@ -315,6 +321,89 @@ const ProfilePage = () => {
 														<div className="flex items-center mt-1 text-sm text-gray-700">
 															{getRoleIcon(affiliation.role)}
 															<span className="capitalize">{userData.name} role: {affiliation.role}</span>
+														</div>
+														<div className="flex items-center mt-1 text-sm text-gray-700">
+															<Calendar className="mr-2" size={16} />
+															<span>
+																{formatDate(affiliation.startDate)} - {formatDate(affiliation.endDate)}
+															</span>
+														</div>
+														{isOwnProfile && !affiliation.isActive && (
+															<div className="flex items-center mt-1 text-sm text-red-500">
+																<XCircle className="mr-2" size={16} />
+																<span>Deactivated</span>
+															</div>
+														)}
+													</div>
+												</div>
+												{isOwnProfile && (
+													<div className="flex-shrink-0">
+														{affiliation.isActive ? (
+															<div className="text-green-500 flex items-center">
+																<CheckCircle size={16} className="mr-1" />
+																<span className="text-xs">Active</span>
+															</div>
+														) : (
+															<div className="text-red-500 flex items-center">
+																<XCircle size={16} className="mr-1" />
+																<span className="text-xs">Inactive</span>
+															</div>
+														)}
+													</div>
+												)}
+											</div>
+										</Link>
+									);
+								})}
+							</div>
+						</div>
+					) : null}
+
+					{/* Affiliations Section (Users who are affiliated with this profile) */}
+					{isAffiliatedUsersLoading ? (
+						<div className="bg-white rounded-lg shadow p-6 text-center my-4">Loading affiliations...</div>
+					) : affiliatedUsers?.data?.length > 0 ? (
+						<div className="bg-white rounded-lg shadow p-6 my-4">
+							<div className="flex items-center justify-between mb-4">
+								<h2 className="text-xl font-bold flex items-center">
+									<Users className="mr-2" size={20} />
+									Affiliated Users
+								</h2>
+								<Link 
+									to={`/affiliations/user/${username}`}
+									className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+								>
+									View All ({affiliatedUsers.data.length})
+								</Link>
+							</div>
+							<div className="space-y-4">
+								{affiliatedUsers.data.slice(0, 3).map((affiliation) => {
+									const user = affiliation.affiliated;
+									
+									return (
+										<Link 
+											key={affiliation._id} 
+											to={`/profile/${user.username}`}
+											className={`block bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors ${!affiliation.isActive && isOwnProfile ? 'opacity-70' : ''}`}
+										>
+											<div className="flex items-start justify-between">
+												<div className="flex items-center">
+													<img
+														src={user.profilePicture || "/avatar.png"}
+														alt={user.name}
+														className="w-12 h-12 rounded-full mr-4"
+													/>
+													<div>
+														<div className="flex items-center gap-2">
+															<h3 className="font-semibold text-lg">{user.name}</h3>
+															<span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+																{affiliation.role}
+															</span>
+														</div>
+														<p className="text-gray-600 text-sm">{user.headline || user.email}</p>
+														<div className="flex items-center mt-1 text-sm text-gray-700">
+															{getRoleIcon(affiliation.role)}
+															<span className="capitalize">Role: {affiliation.role}</span>
 														</div>
 														<div className="flex items-center mt-1 text-sm text-gray-700">
 															<Calendar className="mr-2" size={16} />

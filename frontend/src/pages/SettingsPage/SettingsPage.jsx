@@ -3,7 +3,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { axiosInstance } from '../../lib/axios';
-import { Camera, MapPin, Save, User, Briefcase, GraduationCap, Code } from 'lucide-react';
+import { Camera, MapPin, Save, User, Briefcase, GraduationCap, Code, Lock } from 'lucide-react';
+import ForgotPassword from '../../components/auth/ForgotPassword/ForgotPassword';
 
 const SettingsPage = () => {
   const { data: authUser, isLoading } = useQuery({
@@ -13,6 +14,7 @@ const SettingsPage = () => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('profile');
   const [formData, setFormData] = useState({});
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const { mutate: updateProfile, isLoading: isUpdating } = useMutation({
     mutationFn: async (updatedData) => {
@@ -412,6 +414,26 @@ const SettingsPage = () => {
                   placeholder="Tell us about yourself"
                 ></textarea>
               </div>
+
+              {/* Password Section */}
+              <div className="border-t pt-6">
+                <h3 className="text-lg font-semibold mb-4 flex items-center">
+                  <Lock size={20} className="mr-2" />
+                  Password Settings
+                </h3>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-sm text-gray-600 mb-3">
+                    Need to change your password? Click the button below to reset it via email.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotPassword(true)}
+                    className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors"
+                  >
+                    Reset Password
+                  </button>
+                </div>
+              </div>
               
               <div className="mt-4">
                 <label className="flex items-center space-x-2 cursor-pointer">
@@ -766,6 +788,12 @@ const SettingsPage = () => {
           </div>
         </form>
       </div>
+
+      {/* Forgot Password Modal */}
+      <ForgotPassword 
+        isOpen={showForgotPassword} 
+        onClose={() => setShowForgotPassword(false)} 
+      />
     </div>
   );
 };

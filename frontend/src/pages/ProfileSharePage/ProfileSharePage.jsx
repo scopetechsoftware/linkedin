@@ -43,6 +43,16 @@ export default function ProfileSharePage() {
         },
         enabled: !!username
     });
+    
+    // Add new query to fetch affiliators (organizations the user is affiliated with)
+    const { data: userAffiliators } = useQuery({
+        queryKey: ['userAffiliators', username],
+        queryFn: async () => {
+            const res = await axiosInstance.get(`/affiliations/affiliators/${username}`);
+            return res.data;
+        },
+        enabled: !!username
+    });
 
     const { data: userProjects } = useQuery({
         queryKey: ['userProjects', username],
@@ -139,6 +149,52 @@ export default function ProfileSharePage() {
                 </div>
             ) : (
                 <>
+                    {/* Organizations & Companies Section */}
+                    <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+                        <h2 className="text-2xl font-bold mb-6">Organizations & Companies</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {userAffiliators?.filter(affiliation => affiliation.isActive).map(affiliation => {
+                                const org = affiliation.affiliator;
+                                const getOrgType = (role) => {
+                                    switch (role) {
+                                        case "company":
+                                            return "Company";
+                                        case "university":
+                                            return "University";
+                                        case "employer":
+                                            return "Employer";
+                                        default:
+                                            return "Organization";
+                                    }
+                                };
+                                
+                                // Use organization name, fallback to username if name is not set
+                                const orgDisplayName = org.name || org.username;
+                                
+                                return (
+                                    <div key={affiliation._id} className="bg-gray-50 rounded-lg p-4">
+                                        <div className="flex items-center mb-4">
+                                            <Link to={`/profile/${org.username}`}>
+                                                <img
+                                                    src={org.profilePicture ? `http://localhost:5000/uploads/${org.profilePicture}` : "/avatar.png"}
+                                                    alt={orgDisplayName}
+                                                    className="w-12 h-12 rounded-full mr-4 hover:opacity-90 transition-opacity"
+                                                />
+                                            </Link>
+                                            <div>
+                                                <Link to={`/profile/${org.username}`} className="hover:text-primary transition-colors">
+                                                    <h3 className="font-semibold text-lg">{orgDisplayName}</h3>
+                                                </Link>
+                                                <p className="text-gray-600">{getOrgType(org.role)}</p>
+                                            </div>
+                                        </div>
+                                        <p className="text-gray-700">{org.headline}</p>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
                     {/* Affiliations Section */}
                     <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
                         <h2 className="text-2xl font-bold mb-6">Affiliations</h2>

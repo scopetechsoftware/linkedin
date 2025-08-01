@@ -50,7 +50,9 @@ const AffiliationsPage = () => {
         mutationFn: async ({ affiliationId, isActive }) => {
             await axiosInstance.put(`/affiliations/${affiliationId}`, { isActive });
         },
-        onSuccess: () => {
+        onSuccess: (_, variables) => {
+            toast.success("Affiliation deactivated permanently");
+            
             // Invalidate all affiliation-related queries
             queryClient.invalidateQueries({ queryKey: ["affiliations"] });
             
@@ -61,7 +63,7 @@ const AffiliationsPage = () => {
             queryClient.invalidateQueries({ queryKey: ["userAffiliations", user?.username] });
         },
         onError: (err) => {
-            toast.error(err.response?.data?.message || "Failed to update affiliation status");
+            toast.error(err.response?.data?.message || "Failed to deactivate affiliation");
         },
     });
 
@@ -72,12 +74,8 @@ const AffiliationsPage = () => {
     };
     
     const handleToggleStatus = (affiliationId, currentStatus) => {
-        const newStatus = !currentStatus;
-        const message = newStatus ? "activate" : "deactivate";
-        
-        if (window.confirm(`Are you sure you want to ${message} this affiliation?`)) {
-            toggleAffiliationStatus({ affiliationId, isActive: newStatus });
-            toast.success(`Affiliation ${message}d successfully`);
+        if (window.confirm("Are you sure you want to deactivate this affiliation? This action cannot be undone and the user cannot be reactivated.")) {
+            toggleAffiliationStatus({ affiliationId, isActive: false });
         }
     };
 
@@ -125,7 +123,7 @@ const AffiliationsPage = () => {
                   .map((affiliation) => {
                     const person = isCreatedByUser ? affiliation.affiliated : affiliation.affiliator;
                     return (
-                        <div key={affiliation._id} className="bg-white rounded-lg shadow p-4">
+                        <div key={affiliation._id} className={`bg-white rounded-lg shadow p-4 ${!affiliation.isActive ? 'opacity-75' : ''}`}>
                             <div className="flex items-start justify-between">
                                 <div className="flex items-center">
                                     <Link to={`/profile/${person.username}`}>
@@ -136,9 +134,16 @@ const AffiliationsPage = () => {
                                         />
                                     </Link>
                                     <div>
-                                        <Link to={`/profile/${person.username}`} className="hover:text-primary transition-colors">
-                                            <h3 className="font-semibold text-lg">{person.name}</h3>
-                                        </Link>
+                                        <div className="flex items-center gap-2">
+                                            <Link to={`/profile/${person.username}`} className="hover:text-primary transition-colors">
+                                                <h3 className="font-semibold text-lg">{person.name}</h3>
+                                            </Link>
+                                            {!affiliation.isActive && (
+                                                <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
+                                                    Inactive
+                                                </span>
+                                            )}
+                                        </div>
                                         <p className="text-gray-600 text-sm">{person.headline || person.email}</p>
                                         <div className="flex items-center mt-1 text-sm text-gray-700">
                                             {getRoleIcon(affiliation.role)}
@@ -154,16 +159,30 @@ const AffiliationsPage = () => {
                                 </div>
                                 {isCreatedByUser && (
                                     <div className="flex space-x-2">
-                                        <button
-                                            onClick={() => handleToggleStatus(affiliation._id, affiliation.isActive)}
-                                            className={`${affiliation.isActive ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'} p-1 rounded-full hover:bg-gray-100`}
-                                            title={affiliation.isActive ? "Deactivate affiliation" : "Activate affiliation"}
-                                        >
-                                            {affiliation.isActive ? <XCircle size={18} /> : <CheckCircle size={18} />}
-                                        </button>
+                                        {/* Status indicator */}
+                                        <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                            affiliation.isActive 
+                                                ? 'bg-green-100 text-green-800' 
+                                                : 'bg-red-100 text-red-800'
+                                        }`}>
+                                            {affiliation.isActive ? 'Active' : 'Deactivated'}
+                                        </div>
+                                        
+                                        {/* Only show deactivate button for active affiliations */}
+                                        {affiliation.isActive && (
+                                            <button
+                                                onClick={() => handleToggleStatus(affiliation._id, affiliation.isActive)}
+                                                className="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded-full transition-colors"
+                                                title="Deactivate affiliation (permanent)"
+                                            >
+                                                <XCircle size={18} />
+                                            </button>
+                                        )}
+                                        
+                                        {/* Delete button */}
                                         <button
                                             onClick={() => handleDeleteAffiliation(affiliation._id)}
-                                            className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-gray-100"
+                                            className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-50 transition-colors"
                                             title="Delete affiliation"
                                         >
                                             <Trash2 size={18} />

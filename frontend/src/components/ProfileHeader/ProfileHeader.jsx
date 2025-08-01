@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 
-import { Camera, Clock, MapPin, UserCheck, UserPlus, X } from "lucide-react";
+import { Camera, Clock, MapPin, UserCheck, UserPlus, X, GraduationCap, Building, User } from "lucide-react";
 import { axiosInstance } from "../../lib/axios";
 import ChatButton from "../Chat/ChatButton";
 import ChatWindow from "../Chat/ChatWindow";
@@ -234,6 +234,71 @@ const ProfileHeader = ({ userData, onSave, isOwnProfile }) => {
 					) : (
 						<h1 className='text-2xl font-bold mb-2'>{userData.name}</h1>
 					)}
+
+					{/* Role Display */}
+					<div className='flex justify-center items-center mb-2'>
+						{(() => {
+							const getRoleIcon = (role) => {
+								switch (role) {
+									case "student":
+									case "professor":
+										return <GraduationCap size={16} className="mr-1" />;
+									case "employee":
+									case "employer":
+										return <Building size={16} className="mr-1" />;
+									case "company":
+										return <Building size={16} className="mr-1" />;
+									case "university":
+										return <GraduationCap size={16} className="mr-1" />;
+									default:
+										return <User size={16} className="mr-1" />;
+								}
+							};
+
+							const getRoleDisplayName = (role) => {
+								switch (role) {
+									case "student":
+										return "Student";
+									case "professor":
+										return "Professor";
+									case "employee":
+										return "Employee";
+									case "employer":
+										return "Employer";
+									case "company":
+										return "Company";
+									case "university":
+										return "University";
+									default:
+										return role ? role.charAt(0).toUpperCase() + role.slice(1) : "User";
+								}
+							};
+
+							const getRoleColor = (role) => {
+								switch (role) {
+									case "student":
+									case "professor":
+										return "bg-blue-100 text-blue-800";
+									case "employee":
+									case "employer":
+										return "bg-green-100 text-green-800";
+									case "company":
+										return "bg-purple-100 text-purple-800";
+									case "university":
+										return "bg-indigo-100 text-indigo-800";
+									default:
+										return "bg-gray-100 text-gray-800";
+								}
+							};
+
+							return (
+								<span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getRoleColor(userData.role)}`}>
+									{getRoleIcon(userData.role)}
+									{getRoleDisplayName(userData.role)}
+								</span>
+							);
+						})()}
+					</div>
 
 					{isEditing ? (
 						<input
