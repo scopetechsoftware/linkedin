@@ -166,7 +166,8 @@ export const searchUsers = async (req, res) => {
                 { email: { $regex: query, $options: 'i' } },
                 { username: { $regex: query, $options: 'i' } }
             ],
-            _id: { $ne: req.user._id } // Exclude the current user
+            _id: { $ne: req.user._id }, // Exclude the current user
+            privacySettings: { $ne: { isProfilePrivate: true } } // Exclude private profiles
         }).select('name email username profilePicture headline location privacySettings').limit(10);
 
         res.json(users);

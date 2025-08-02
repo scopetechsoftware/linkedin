@@ -32,10 +32,9 @@ export const getSkillMatchedContent = async (req, res) => {
             const [recentPeople, recentJobs, recentPosts] = await Promise.all([
                 User.find({
                     profilePicture: { $exists: true, $ne: null },
-                    privacySettings: { $ne: { isProfilePrivate: true } },
                     _id: { $ne: userId }
                 })
-                .select('name email username role profilePicture headline location skills')
+                .select('name email username role profilePicture headline location skills privacySettings')
                 .sort({ createdAt: -1 })
                 .limit(3),
                 
@@ -50,8 +49,14 @@ export const getSkillMatchedContent = async (req, res) => {
                     .limit(3)
             ]);
             
+            // Mark private profiles
+            const recentPeopleWithPrivacy = recentPeople.map(user => ({
+                ...user.toObject(),
+                isPrivate: user.privacySettings?.isProfilePrivate || false
+            }));
+            
             return res.status(200).json({
-                people: recentPeople,
+                people: recentPeopleWithPrivacy,
                 jobs: recentJobs,
                 posts: recentPosts,
                 userSkills: cleanedUserSkills,
@@ -65,16 +70,21 @@ export const getSkillMatchedContent = async (req, res) => {
         // Find people with matching skills
         const skillMatchedPeople = await User.find({
             _id: { $ne: userId },
-            privacySettings: { $ne: { isProfilePrivate: true } },
             $or: [
                 { skills: { $in: skillPatterns } },
                 { headline: { $in: skillPatterns } },
                 { about: { $in: skillPatterns } }
             ]
         })
-        .select('name email username role profilePicture headline location skills')
+        .select('name email username role profilePicture headline location skills privacySettings')
         .sort({ createdAt: -1 })
         .limit(3);
+
+        // Mark private profiles
+        const skillMatchedPeopleWithPrivacy = skillMatchedPeople.map(user => ({
+            ...user.toObject(),
+            isPrivate: user.privacySettings?.isProfilePrivate || false
+        }));
 
         // Find jobs with matching skills
         const skillMatchedJobs = await Job.find({
@@ -101,7 +111,7 @@ export const getSkillMatchedContent = async (req, res) => {
         .limit(3);
 
         res.status(200).json({
-            people: skillMatchedPeople,
+            people: skillMatchedPeopleWithPrivacy,
             jobs: skillMatchedJobs,
             posts: skillMatchedPosts,
             userSkills: cleanedUserSkills
@@ -127,15 +137,20 @@ export const getSkillMatchedPeople = async (req, res) => {
             // If user has no skills, return recent people
             const recentPeople = await User.find({
                 profilePicture: { $exists: true, $ne: null },
-                privacySettings: { $ne: { isProfilePrivate: true } },
                 _id: { $ne: userId }
             })
-            .select('name email username role profilePicture headline location skills')
+            .select('name email username role profilePicture headline location skills privacySettings')
             .sort({ createdAt: -1 })
             .limit(10);
             
+            // Mark private profiles
+            const recentPeopleWithPrivacy = recentPeople.map(user => ({
+                ...user.toObject(),
+                isPrivate: user.privacySettings?.isProfilePrivate || false
+            }));
+            
             return res.status(200).json({
-                people: recentPeople,
+                people: recentPeopleWithPrivacy,
                 userSkills: cleanedUserSkills,
                 message: "No skills found, showing recent people"
             });
@@ -147,19 +162,24 @@ export const getSkillMatchedPeople = async (req, res) => {
         // Find people with matching skills
         const skillMatchedPeople = await User.find({
             _id: { $ne: userId },
-            privacySettings: { $ne: { isProfilePrivate: true } },
             $or: [
                 { skills: { $in: skillPatterns } },
                 { headline: { $in: skillPatterns } },
                 { about: { $in: skillPatterns } }
             ]
         })
-        .select('name email username role profilePicture headline location skills')
+        .select('name email username role profilePicture headline location skills privacySettings')
         .sort({ createdAt: -1 })
         .limit(10);
 
+        // Mark private profiles
+        const skillMatchedPeopleWithPrivacy = skillMatchedPeople.map(user => ({
+            ...user.toObject(),
+            isPrivate: user.privacySettings?.isProfilePrivate || false
+        }));
+
         res.status(200).json({
-            people: skillMatchedPeople,
+            people: skillMatchedPeopleWithPrivacy,
             userSkills: cleanedUserSkills
         });
     } catch (error) {
@@ -311,14 +331,15 @@ export const searchAll = async (req, res) => {
             }).populate('author', 'name avatar username').limit(6)
         ]);
 
-        // Clean skills for people results
+        // Clean skills for people results and mark private profiles
         const peopleWithCleanSkills = people.map(user => ({
             ...user.toObject(),
-            skills: cleanSkills(user.skills || [])
+            skills: cleanSkills(user.skills || []),
+            isPrivate: user.privacySettings?.isProfilePrivate || false
         }));
-
+        
         const results = {
-            people: peopleWithCleanSkills.filter(user => !user.privacySettings?.isProfilePrivate),
+            people: peopleWithCleanSkills,
             jobs,
             posts
         };
@@ -361,11 +382,14 @@ export const searchPeople = async (req, res) => {
             ]
         }).select('name email username avatar role profilePicture headline location privacySettings skills').limit(10);
 
-        // Filter out private profiles
-        const publicUsers = users.filter(user => !user.privacySettings?.isProfilePrivate);
+        // Include all users but mark private profiles
+        const allUsers = users.map(user => ({
+            ...user.toObject(),
+            isPrivate: user.privacySettings?.isProfilePrivate || false
+        }));
 
-        console.log('Search query:', searchQuery, 'Found users:', publicUsers.length);
-        res.status(200).json(publicUsers);
+        console.log('Search query:', searchQuery, 'Found users:', allUsers.length);
+        res.status(200).json(allUsers);
     } catch (error) {
         res.status(500).json({ message: 'Error searching users' });
     }

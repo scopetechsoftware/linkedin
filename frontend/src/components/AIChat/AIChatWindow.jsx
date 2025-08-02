@@ -130,13 +130,21 @@ const AIChatWindow = ({ isOpen, onClose }) => {
             </form>
           </div>
         ) : (
-          // User Details Display
+                      // User Details Display
           <div className="space-y-4">
-            <div className="bg-green-50 p-3 rounded-lg">
-              <p className="text-sm text-green-800">
-                ✅ Found user details! Here's what I found:
-              </p>
-            </div>
+            {userData.message ? (
+              <div className="bg-yellow-50 p-3 rounded-lg">
+                <p className="text-sm text-yellow-800">
+                  ⚠️ {userData.message}
+                </p>
+              </div>
+            ) : (
+              <div className="bg-green-50 p-3 rounded-lg">
+                <p className="text-sm text-green-800">
+                  ✅ Found user details! Here's what I found:
+                </p>
+              </div>
+            )}
             
             {/* User Profile */}
             <div className="bg-white border border-gray-200 rounded-lg p-4">
@@ -156,25 +164,29 @@ const AIChatWindow = ({ isOpen, onClose }) => {
               </div>
               
               <div className="space-y-2">
-                <div className="flex items-center space-x-2 text-sm">
-                  <Mail size={14} className="text-gray-500" />
-                  <span>{userData.email}</span>
-                </div>
+                {!userData.privacySettings?.isProfilePrivate && (
+                  <div className="flex items-center space-x-2 text-sm">
+                    <Mail size={14} className="text-gray-500" />
+                    <span>{userData.email}</span>
+                  </div>
+                )}
                 {userData.location && (
                   <div className="flex items-center space-x-2 text-sm">
                     <MapPin size={14} className="text-gray-500" />
                     <span>{userData.location}</span>
                   </div>
                 )}
-                <div className="flex items-center space-x-2 text-sm">
-                  <Calendar size={14} className="text-gray-500" />
-                  <span>Joined {formatDate(userData.createdAt)}</span>
-                </div>
+                {!userData.privacySettings?.isProfilePrivate && userData.createdAt && (
+                  <div className="flex items-center space-x-2 text-sm">
+                    <Calendar size={14} className="text-gray-500" />
+                    <span>Joined {formatDate(userData.createdAt)}</span>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Affiliations */}
-            {userData.affiliations && userData.affiliations.length > 0 && (
+            {!userData.privacySettings?.isProfilePrivate && userData.affiliations && userData.affiliations.length > 0 && (
               <div className="bg-white border border-gray-200 rounded-lg p-4">
                 <h4 className="font-semibold mb-3 flex items-center">
                   <Building size={16} className="mr-2" />
@@ -205,7 +217,7 @@ const AIChatWindow = ({ isOpen, onClose }) => {
             )}
 
             {/* Experience */}
-            {userData.experience && userData.experience.length > 0 && (
+            {!userData.privacySettings?.isProfilePrivate && userData.experience && userData.experience.length > 0 && (
               <div className="bg-white border border-gray-200 rounded-lg p-4">
                 <h4 className="font-semibold mb-3 flex items-center">
                   <Award size={16} className="mr-2" />
@@ -233,7 +245,7 @@ const AIChatWindow = ({ isOpen, onClose }) => {
             )}
 
             {/* Skills */}
-            {userData.skills && userData.skills.length > 0 && (
+            {!userData.privacySettings?.isProfilePrivate && userData.skills && userData.skills.length > 0 && (
               <div className="bg-white border border-gray-200 rounded-lg p-4">
                 <h4 className="font-semibold mb-3 flex items-center">
                   <Award size={16} className="mr-2" />

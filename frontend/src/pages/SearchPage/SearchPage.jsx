@@ -605,10 +605,20 @@ const SearchPageContent = () => {
                                                                             className="w-12 h-12 rounded-full"
                                                                         />
                                                                         <div className="flex-1">
-                                                                            <h4 className="font-semibold text-gray-900">{user.name}</h4>
+                                                                            <div className="flex items-center gap-2">
+                                                                                <h4 className="font-semibold text-gray-900">{user.name}</h4>
+                                                                                {user.isPrivate && (
+                                                                                    <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full flex items-center">
+                                                                                        <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                                                            <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                                                                                        </svg>
+                                                                                        Private
+                                                                                    </span>
+                                                                                )}
+                                                                            </div>
                                                                             <p className="text-sm text-gray-600">{user.headline || user.role}</p>
                                                                             <p className="text-xs text-gray-500">{user.location}</p>
-                                                                            {user.skills && user.skills.length > 0 && (
+                                                                            {!user.isPrivate && user.skills && user.skills.length > 0 && (
                                                                                 <div className="flex flex-wrap gap-1 mt-1">
                                                                                     {cleanSkills(user.skills).slice(0, 2).map((skill, index) => (
                                                                                         <span key={index} className="px-1 py-0.5 bg-blue-50 text-blue-700 text-xs rounded">
@@ -745,10 +755,20 @@ const SearchPageContent = () => {
                                                                         className="w-12 h-12 rounded-full"
                                                                     />
                                                                     <div className="flex-1">
-                                                                        <h4 className="font-semibold text-gray-900">{user.name}</h4>
+                                                                        <div className="flex items-center gap-2">
+                                                                            <h4 className="font-semibold text-gray-900">{user.name}</h4>
+                                                                            {user.isPrivate && (
+                                                                                <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full flex items-center">
+                                                                                    <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                                                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                                                                                    </svg>
+                                                                                    Private
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
                                                                         <p className="text-sm text-gray-600">{user.headline || user.role}</p>
                                                                         <p className="text-xs text-gray-500">{user.location}</p>
-                                                                        {user.skills && user.skills.length > 0 && (
+                                                                        {!user.isPrivate && user.skills && user.skills.length > 0 && (
                                                                             <div className="flex flex-wrap gap-1 mt-1">
                                                                                 {cleanSkills(user.skills).slice(0, 2).map((skill, index) => (
                                                                                     <span key={index} className="px-1 py-0.5 bg-blue-50 text-blue-700 text-xs rounded">

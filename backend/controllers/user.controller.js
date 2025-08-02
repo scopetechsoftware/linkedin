@@ -172,7 +172,22 @@ export const searchUser = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Fetch affiliations for the user
+    // Check if the profile is private
+    if (user.privacySettings?.isProfilePrivate) {
+      // Return only basic information for private profiles
+      const limitedProfile = {
+        _id: user._id,
+        name: user.name,
+        username: user.username,
+        profilePicture: user.profilePicture,
+        location: user.location,
+        privacySettings: { isProfilePrivate: true },
+        message: "This profile is private. Only basic information is available."
+      };
+      return res.json(limitedProfile);
+    }
+
+    // Fetch affiliations for the user (only for public profiles)
     const affiliations = await Affiliation.find({ affiliated: user._id })
       .populate("affiliator", "name email username profilePicture headline")
       .sort({ startDate: -1 })
