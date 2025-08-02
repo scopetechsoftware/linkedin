@@ -14,6 +14,9 @@ const transporter = nodemailer.createTransport({
 		user: process.env.EMAIL_USER,
 		pass: process.env.EMAIL_PASS,
 	},
+	tls: {
+		rejectUnauthorized: false // Allows self-signed certificates
+	}
 });
 
 // Generate OTP
@@ -23,8 +26,38 @@ const generateOTP = () => {
 
 // Send OTP email
 const sendOTPEmail = async (email, otp) => {
+	// First try using mailtrap if available
+	try {
+		const { mailtrapClient, sender } = await import("../lib/mailtrap.js");
+		if (mailtrapClient && sender) {
+			const recipient = [{ email }];
+			await mailtrapClient.send({
+				from: sender,
+				to: recipient,
+				subject: "Password Reset OTP",
+				html: `
+					<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+						<h2 style="color: #0077b5;">Password Reset Request</h2>
+						<p>You have requested to reset your password. Use the following OTP to verify your identity:</p>
+						<div style="background-color: #f8f9fa; padding: 20px; text-align: center; margin: 20px 0;">
+							<h1 style="color: #0077b5; font-size: 32px; letter-spacing: 5px; margin: 0;">${otp}</h1>
+						</div>
+						<p>This OTP will expire in 10 minutes. If you didn't request this, please ignore this email.</p>
+						<p>Best regards,<br>UnLinked Team</p>
+					</div>
+				`,
+				category: "otp",
+			});
+			return true;
+		}
+	} catch (mailtrapError) {
+		console.error("Error sending OTP email via Mailtrap:", mailtrapError);
+		// Fall back to nodemailer if mailtrap fails
+	}
+
+	// Fallback to nodemailer
 	const mailOptions = {
-		from: process.env.EMAIL_USER,
+		from: process.env.EMAIL_USER || "noreply@unlinked.com",
 		to: email,
 		subject: "Password Reset OTP",
 		html: `
@@ -44,7 +77,7 @@ const sendOTPEmail = async (email, otp) => {
 		await transporter.sendMail(mailOptions);
 		return true;
 	} catch (error) {
-		console.error("Error sending OTP email:", error);
+		console.error("Error sending OTP email via Nodemailer:", error);
 		return false;
 	}
 };

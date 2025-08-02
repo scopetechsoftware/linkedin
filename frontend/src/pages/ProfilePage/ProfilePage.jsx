@@ -117,7 +117,7 @@ const ProfilePage = () => {
 
 	return (
 		<div className='max-w-4xl mx-auto p-4'>
-			<ProfileHeader userData={userData} isOwnProfile={isOwnProfile} onSave={handleSave} />
+			<ProfileHeader userData={userData} isOwnProfile={false} />
 			
 			{/* Check if profile is private and not own profile */}
 			{isLimitedProfile && !isOwnProfile ? (
@@ -134,7 +134,7 @@ const ProfilePage = () => {
 			) : (
 				<>
 					{/* Only show About section if not limited profile */}
-					{!isLimitedProfile && <AboutSection userData={userData} isOwnProfile={isOwnProfile} onSave={handleSave} />}
+					{!isLimitedProfile && <AboutSection userData={userData} isOwnProfile={false} />}
 
 					{/* Posts Section - Only show if not limited profile */}
 					{!isLimitedProfile && (
@@ -148,7 +148,7 @@ const ProfilePage = () => {
 									Posts
 								</h2>
 								<Link 
-									to={`/posts/user/${username}`}
+									to={`/`}
 									className="text-blue-600 hover:text-blue-800 text-sm font-medium"
 								>
 									View All ({userPosts.data.length})
@@ -158,7 +158,7 @@ const ProfilePage = () => {
 								{userPosts.data.slice(0, 3).map((post) => (
 									<Link 
 										key={post._id} 
-										to={`/posts/${post._id}`}
+										to={`/`}
 										className="block bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors"
 									>
 										<div className="flex items-start justify-between">
@@ -260,17 +260,11 @@ const ProfilePage = () => {
 							<div className="bg-white rounded-lg shadow p-6 text-center my-4">Loading affiliators...</div>
 						) : userAffiliations?.data?.length > 0 ? (
 						<div className="bg-white rounded-lg shadow p-6 my-4">
-							<div className="flex items-center justify-between mb-4">
+							<div className="flex items-center mb-4">
 								<h2 className="text-xl font-bold flex items-center">
 									<Building className="mr-2" size={20} />
 									Organizations & Companies
 								</h2>
-								<Link 
-									to={`/affiliations/user/${username}`}
-									className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-								>
-									View All ({userAffiliations.data.length})
-								</Link>
 							</div>
 							<div className="space-y-4">
 								{userAffiliations.data.slice(0, 3).map((affiliation) => {
@@ -293,10 +287,10 @@ const ProfilePage = () => {
 									
 									return (
 										<Link 
-											key={affiliation._id} 
-											to={`/profile/${org.username}`}
-											className={`block bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors ${!affiliation.isActive ? 'opacity-70' : ''}`}
-										>
+										key={affiliation._id} 
+										to={`/`}
+										className={`block bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors ${!affiliation.isActive ? 'opacity-70' : ''}`}
+									>
 											<div className="flex items-start justify-between">
 												<div className="flex items-center">
 													<img
@@ -358,17 +352,11 @@ const ProfilePage = () => {
 							<div className="bg-white rounded-lg shadow p-6 text-center my-4">Loading affiliations...</div>
 						) : affiliatedUsers?.data?.length > 0 ? (
 						<div className="bg-white rounded-lg shadow p-6 my-4">
-							<div className="flex items-center justify-between mb-4">
+							<div className="flex items-center mb-4">
 								<h2 className="text-xl font-bold flex items-center">
 									<Users className="mr-2" size={20} />
 									Affiliated Users
 								</h2>
-								<Link 
-									to={`/affiliations/user/${username}`}
-									className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-								>
-									View All ({affiliatedUsers.data.length})
-								</Link>
 							</div>
 							<div className="space-y-4">
 								{affiliatedUsers.data.slice(0, 3).map((affiliation) => {
@@ -376,10 +364,10 @@ const ProfilePage = () => {
 									
 									return (
 										<Link 
-											key={affiliation._id} 
-											to={`/profile/${user.username}`}
-											className={`block bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors ${!affiliation.isActive ? 'opacity-70' : ''}`}
-										>
+										key={affiliation._id} 
+										to={`/`}
+										className={`block bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors ${!affiliation.isActive ? 'opacity-70' : ''}`}
+									>
 											<div className="flex items-start justify-between">
 												<div className="flex items-center">
 													<img
@@ -438,10 +426,10 @@ const ProfilePage = () => {
 					{/* Only show detailed sections if not limited profile */}
 					{!isLimitedProfile && (
 						<>
-							<ExperienceSection userData={userData} isOwnProfile={isOwnProfile} onSave={handleSave} />
-							<EducationSection userData={userData} isOwnProfile={isOwnProfile} onSave={handleSave} />
-							<SkillsSection userData={userData} isOwnProfile={isOwnProfile} onSave={handleSave} />
-							<ProjectsSection userData={userData} isOwnProfile={isOwnProfile} onSave={handleSave} />
+							<ExperienceSection userData={userData} isOwnProfile={false} />
+							<EducationSection userData={userData} isOwnProfile={false} />
+							<SkillsSection userData={userData} isOwnProfile={false} />
+							<ProjectsSection userData={userData} isOwnProfile={false} />
 							<RatingsSection userData={userData} />
 						</>
 					)}

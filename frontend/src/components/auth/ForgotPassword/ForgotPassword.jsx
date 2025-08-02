@@ -19,7 +19,12 @@ const ForgotPassword = ({ isOpen, onClose }) => {
 			setStep(2);
 		},
 		onError: (error) => {
-			toast.error(error.response?.data?.message || "Failed to send OTP");
+			console.error("OTP error:", error);
+			if (error.response?.status === 500) {
+				toast.error("Server error: Unable to send OTP email. Please try again later or contact support.");
+			} else {
+				toast.error(error.response?.data?.message || "Failed to send OTP");
+			}
 		},
 	});
 
@@ -251,4 +256,4 @@ const ForgotPassword = ({ isOpen, onClose }) => {
 	);
 };
 
-export default ForgotPassword; 
+export default ForgotPassword;

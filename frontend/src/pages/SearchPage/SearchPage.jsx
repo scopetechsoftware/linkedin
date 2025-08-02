@@ -42,7 +42,7 @@ const SearchPageContent = () => {
             'Machine Learning', 'Data Science', 'DevOps', 'Full Stack', 'Frontend',
             'Backend', 'Mobile Development', 'iOS', 'Android', 'Flutter', 'React Native'
         ];
-        return skills.filter(skill => 
+        return skills.filter(skill =>
             skill.toLowerCase().includes(query.toLowerCase())
         ).slice(0, 8);
     };
@@ -59,7 +59,7 @@ const SearchPageContent = () => {
                         ...jobFilters
                     }
                 });
-                
+
                 // Handle different response formats based on filter
                 if (selectedFilter === 'all') {
                     return response.data; // Already has people, jobs, posts properties
@@ -203,7 +203,10 @@ const SearchPageContent = () => {
                                     <div className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors cursor-pointer">
                                         <div className="flex items-center space-x-3">
                                             <img
-                                                src={user.profilePicture || "/avatar.png"}
+                                                src={user.profilePicture
+                                                    ? `http://localhost:5000/uploads/${user.profilePicture}`
+                                                    : "/avatar.png"}
+
                                                 alt={user.name}
                                                 className="w-12 h-12 rounded-full"
                                             />
@@ -251,7 +254,7 @@ const SearchPageContent = () => {
                                                 <div className="flex items-center text-sm text-gray-600 mb-1">
                                                     <Briefcase className="mr-1" size={14} />
                                                     {job.createdBy ? (
-                                                        <Link 
+                                                        <Link
                                                             to={`/profile/${job.createdBy.username}`}
                                                             className="text-blue-600 hover:text-blue-800 hover:underline"
                                                             onClick={(e) => e.stopPropagation()}
@@ -356,7 +359,7 @@ const SearchPageContent = () => {
                                 {selectedFilter === 'posts' && 'Posts Related to Your Skills'}
                             </h3>
                         </div>
-                        
+
                         {selectedFilter === 'people' && content.people && content.people.length > 0 && (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {content.people.map(user => (
@@ -395,23 +398,23 @@ const SearchPageContent = () => {
                                     <Link to={`/jobs/${job._id}`} key={job._id} className="block">
                                         <div className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors border-l-4 border-green-500">
                                             <div className="flex justify-between items-start">
-                                                                                            <div className="flex-1">
-                                                <h4 className="font-semibold text-gray-900">{job.title}</h4>
-                                                <div className="flex items-center text-sm text-gray-600 mb-1">
-                                                    <Briefcase className="mr-1" size={14} />
-                                                    {job.createdBy ? (
-                                                        <Link 
-                                                            to={`/profile/${job.createdBy.username}`}
-                                                            className="text-blue-600 hover:text-blue-800 hover:underline"
-                                                            onClick={(e) => e.stopPropagation()}
-                                                        >
-                                                            {job.createdBy.name}
-                                                        </Link>
-                                                    ) : (
-                                                        "Unknown"
-                                                    )}
-                                                </div>
-                                                <p className="text-sm text-gray-600">{job.location}</p>
+                                                <div className="flex-1">
+                                                    <h4 className="font-semibold text-gray-900">{job.title}</h4>
+                                                    <div className="flex items-center text-sm text-gray-600 mb-1">
+                                                        <Briefcase className="mr-1" size={14} />
+                                                        {job.createdBy ? (
+                                                            <Link
+                                                                to={`/profile/${job.createdBy.username}`}
+                                                                className="text-blue-600 hover:text-blue-800 hover:underline"
+                                                                onClick={(e) => e.stopPropagation()}
+                                                            >
+                                                                {job.createdBy.name}
+                                                            </Link>
+                                                        ) : (
+                                                            "Unknown"
+                                                        )}
+                                                    </div>
+                                                    <p className="text-sm text-gray-600">{job.location}</p>
                                                     <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
                                                         <span className="flex items-center">
                                                             <MapPin size={14} className="mr-1" />
@@ -480,20 +483,20 @@ const SearchPageContent = () => {
                         )}
 
                         {((selectedFilter === 'people' && (!content.people || content.people.length === 0)) ||
-                          (selectedFilter === 'jobs' && (!content.jobs || content.jobs.length === 0)) ||
-                          (selectedFilter === 'posts' && (!content.posts || content.posts.length === 0))) && (
-                            <div className="text-center py-8">
-                                <div className="text-gray-400 mb-2">
-                                    {selectedFilter === 'people' && <Users size={48} />}
-                                    {selectedFilter === 'jobs' && <Briefcase size={48} />}
-                                    {selectedFilter === 'posts' && <FileText size={48} />}
+                            (selectedFilter === 'jobs' && (!content.jobs || content.jobs.length === 0)) ||
+                            (selectedFilter === 'posts' && (!content.posts || content.posts.length === 0))) && (
+                                <div className="text-center py-8">
+                                    <div className="text-gray-400 mb-2">
+                                        {selectedFilter === 'people' && <Users size={48} />}
+                                        {selectedFilter === 'jobs' && <Briefcase size={48} />}
+                                        {selectedFilter === 'posts' && <FileText size={48} />}
+                                    </div>
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                                        No {selectedFilter} found matching your skills
+                                    </h3>
+                                    <p className="text-gray-600">Try adding more skills to your profile or search for different terms</p>
                                 </div>
-                                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                                    No {selectedFilter} found matching your skills
-                                </h3>
-                                <p className="text-gray-600">Try adding more skills to your profile or search for different terms</p>
-                            </div>
-                        )}
+                            )}
                     </div>
                 )}
 
@@ -581,7 +584,7 @@ const SearchPageContent = () => {
                                             Search Results for "{searchQuery}"
                                         </h3>
                                     </div>
-                                    
+
                                     {/* Search Results Content */}
                                     {selectedFilter === 'all' && (
                                         <>
@@ -639,7 +642,7 @@ const SearchPageContent = () => {
                                                                             <div className="flex items-center text-sm text-gray-600 mb-1">
                                                                                 <Briefcase className="mr-1" size={14} />
                                                                                 {job.createdBy ? (
-                                                                                    <Link 
+                                                                                    <Link
                                                                                         to={`/profile/${job.createdBy.username}`}
                                                                                         className="text-blue-600 hover:text-blue-800 hover:underline"
                                                                                         onClick={(e) => e.stopPropagation()}
@@ -773,7 +776,7 @@ const SearchPageContent = () => {
                                                                         <div className="flex items-center text-sm text-gray-600 mb-1">
                                                                             <Briefcase className="mr-1" size={14} />
                                                                             {job.createdBy ? (
-                                                                                <Link 
+                                                                                <Link
                                                                                     to={`/profile/${job.createdBy.username}`}
                                                                                     className="text-blue-600 hover:text-blue-800 hover:underline"
                                                                                     onClick={(e) => e.stopPropagation()}
@@ -853,20 +856,20 @@ const SearchPageContent = () => {
                                             )}
 
                                             {((selectedFilter === 'people' && (!searchResults.people || searchResults.people.length === 0)) ||
-                                              (selectedFilter === 'jobs' && (!searchResults.jobs || searchResults.jobs.length === 0)) ||
-                                              (selectedFilter === 'posts' && (!searchResults.posts || searchResults.posts.length === 0))) && (
-                                                <div className="text-center py-8">
-                                                    <div className="text-gray-400 mb-2">
-                                                        {selectedFilter === 'people' && <Users size={48} />}
-                                                        {selectedFilter === 'jobs' && <Briefcase size={48} />}
-                                                        {selectedFilter === 'posts' && <FileText size={48} />}
+                                                (selectedFilter === 'jobs' && (!searchResults.jobs || searchResults.jobs.length === 0)) ||
+                                                (selectedFilter === 'posts' && (!searchResults.posts || searchResults.posts.length === 0))) && (
+                                                    <div className="text-center py-8">
+                                                        <div className="text-gray-400 mb-2">
+                                                            {selectedFilter === 'people' && <Users size={48} />}
+                                                            {selectedFilter === 'jobs' && <Briefcase size={48} />}
+                                                            {selectedFilter === 'posts' && <FileText size={48} />}
+                                                        </div>
+                                                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                                                            No {selectedFilter} found for "{searchQuery}"
+                                                        </h3>
+                                                        <p className="text-gray-600">Try different search terms or check your spelling</p>
                                                     </div>
-                                                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                                                        No {selectedFilter} found for "{searchQuery}"
-                                                    </h3>
-                                                    <p className="text-gray-600">Try different search terms or check your spelling</p>
-                                                </div>
-                                            )}
+                                                )}
                                         </div>
                                     )}
                                 </div>
@@ -880,7 +883,7 @@ const SearchPageContent = () => {
                                                 Recommended for You (Based on Your Skills)
                                             </h3>
                                         </div>
-                                        
+
                                         {/* User Skills Display */}
                                         {searchSkillMatchedContent.userSkills && searchSkillMatchedContent.userSkills.length > 0 && (
                                             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 mb-4 border border-blue-200">
@@ -957,7 +960,7 @@ const SearchPageContent = () => {
                                                                         <div className="flex items-center text-sm text-gray-600 mb-1">
                                                                             <Briefcase className="mr-1" size={14} />
                                                                             {job.createdBy ? (
-                                                                                <Link 
+                                                                                <Link
                                                                                     to={`/profile/${job.createdBy.username}`}
                                                                                     className="text-blue-600 hover:text-blue-800 hover:underline"
                                                                                     onClick={(e) => e.stopPropagation()}
@@ -1066,8 +1069,8 @@ const SearchPageContent = () => {
                 )}
 
                 {/* Job Posting Form Modal */}
-                <JobPostingForm 
-                    isOpen={showJobForm} 
+                <JobPostingForm
+                    isOpen={showJobForm}
                     onClose={() => setShowJobForm(false)}
                     onPosted={() => {
                         setShowJobForm(false);

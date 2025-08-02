@@ -5,13 +5,13 @@ import toast from "react-hot-toast";
 import { Image, Loader } from "lucide-react";
 
 const PostCreation = ({ user }) => {
-    const [content, setContent] = useState("");
+	const [content, setContent] = useState("");
 	const [image, setImage] = useState(null);
 	const [imagePreview, setImagePreview] = useState(null);
 
 	const queryClient = useQueryClient();
 
-    const { mutate: createPostMutation, isPending } = useMutation({
+	const { mutate: createPostMutation, isPending } = useMutation({
 		mutationFn: async (postData) => {
 			const res = await axiosInstance.post("/posts/create", postData, {
 				headers: { "Content-Type": "multipart/form-data" },
@@ -28,12 +28,12 @@ const PostCreation = ({ user }) => {
 		},
 	});
 
-    const handlePostCreation = async () => {
+	const handlePostCreation = async () => {
 		try {
 			// Create FormData for file uploads
 			const formData = new FormData();
 			formData.append('content', content);
-			
+
 			// Add image if exists
 			if (image) {
 				formData.append('image', image);
@@ -45,13 +45,13 @@ const PostCreation = ({ user }) => {
 		}
 	};
 
-    const resetForm = () => {
+	const resetForm = () => {
 		setContent("");
 		setImage(null);
 		setImagePreview(null);
 	};
 
-    const handleImageChange = (e) => {
+	const handleImageChange = (e) => {
 		const file = e.target.files[0];
 		setImage(file);
 		if (file) {
@@ -70,10 +70,17 @@ const PostCreation = ({ user }) => {
 		});
 	};
 
-    return (
-        <div className='bg-secondary rounded-lg shadow mb-4 p-4'>
+	return (
+		<div className='bg-secondary rounded-lg shadow mb-4 p-4'>
 			<div className='flex space-x-3'>
-				<img src={`http://localhost:5000/uploads/${user.profilePicture}` || "/avatar.png"} alt={user.name} className='size-12 rounded-full' />
+				<img
+					src={user.profilePicture
+						? `http://localhost:5000/uploads/${user.profilePicture}`
+						: "/avatar.png"}
+					alt={user.name}
+					className="size-12 rounded-full"
+				/>
+
 				<textarea
 					placeholder="What's on your mind?"
 					className='w-full p-3 rounded-lg bg-base-100 hover:bg-base-200 focus:bg-base-200 focus:outline-none resize-none transition-colors duration-200 min-h-[100px]'
@@ -106,7 +113,7 @@ const PostCreation = ({ user }) => {
 				</button>
 			</div>
 		</div>
-    )
+	)
 }
 
 export default PostCreation

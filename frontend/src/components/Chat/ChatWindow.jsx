@@ -113,7 +113,7 @@ const ChatWindow = ({ isOpen, onClose, selectedChat, setSelectedChat }) => {
 		const handleReceiveMessage = (newMessage) => {
 			if (newMessage.chatId === selectedChat._id) {
 				setMessages((prev) => [...prev, newMessage]);
-				
+
 				// If the message is from the other user, mark it as read
 				if (newMessage.sender._id !== authUser._id) {
 					socket.emit("mark_read", { chatId: selectedChat._id });
@@ -161,7 +161,7 @@ const ChatWindow = ({ isOpen, onClose, selectedChat, setSelectedChat }) => {
 	useEffect(() => {
 		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 	}, [messages]);
-	
+
 	// Clear messages when chat is deselected
 	useEffect(() => {
 		if (!selectedChat) {
@@ -211,7 +211,7 @@ const ChatWindow = ({ isOpen, onClose, selectedChat, setSelectedChat }) => {
 			socket.emit("send_message", {
 				chatId: selectedChat._id,
 				content: message.trim(),
-				
+
 			});
 			setMessage("");
 		} else {
@@ -222,7 +222,7 @@ const ChatWindow = ({ isOpen, onClose, selectedChat, setSelectedChat }) => {
 		// Clear typing indicator
 		if (typingTimeout) clearTimeout(typingTimeout);
 		if (socket) socket.emit("stop_typing", { chatId: selectedChat._id });
-		
+
 	};
 
 	const handleBackToList = () => {
@@ -291,16 +291,15 @@ const ChatWindow = ({ isOpen, onClose, selectedChat, setSelectedChat }) => {
 										className={`flex ${msg.sender._id === authUser._id ? "justify-end" : "justify-start"} relative`}
 									>
 										<div
-											className={`max-w-[70%] rounded-lg p-3 ${
-												msg.sender._id === authUser._id
+											className={`max-w-[70%] rounded-lg p-3 ${msg.sender._id === authUser._id
 													? "bg-primary text-white rounded-br-none"
 													: "bg-gray-200 text-gray-800 rounded-bl-none"
-											} ${selectedMessageId === msg._id ? "ring-2 ring-blue-400" : ""} cursor-pointer message-bubble`}
+												} ${selectedMessageId === msg._id ? "ring-2 ring-blue-400" : ""} cursor-pointer message-bubble`}
 											onClick={() => setSelectedMessageId(selectedMessageId === msg._id ? null : msg._id)}
 										>
 											<div className="flex items-center mb-1">
 												{msg.sender._id !== authUser._id && (
-													<a 
+													<a
 														href={`/profile/${msg.sender.username}`}
 														onClick={(e) => e.stopPropagation()}
 														className="font-medium hover:underline mr-2"
@@ -312,14 +311,13 @@ const ChatWindow = ({ isOpen, onClose, selectedChat, setSelectedChat }) => {
 											<p className="break-words">{msg.content}</p>
 											<div className="flex justify-between items-center mt-1">
 												<p
-													className={`text-xs ${
-														msg.sender._id === authUser._id ? "text-gray-200" : "text-gray-500"
-													}`}
+													className={`text-xs ${msg.sender._id === authUser._id ? "text-gray-200" : "text-gray-500"
+														}`}
 												>
 													{format(new Date(msg.createdAt), "h:mm a")}
 												</p>
 												{msg.sender._id !== authUser._id && (
-													<a 
+													<a
 														href={`/profile/${msg.sender.username}`}
 														onClick={(e) => e.stopPropagation()}
 														className={`text-xs ${msg.sender._id === authUser._id ? "text-gray-200" : "text-gray-500"} hover:underline`}
@@ -364,7 +362,7 @@ const ChatWindow = ({ isOpen, onClose, selectedChat, setSelectedChat }) => {
 										key={chat._id}
 										className="flex items-center p-2 hover:bg-gray-100 rounded-md cursor-pointer"
 									>
-										<a 
+										<a
 											href={`/profile/${otherUser?.username}`}
 											onClick={(e) => {
 												e.stopPropagation();
@@ -374,18 +372,21 @@ const ChatWindow = ({ isOpen, onClose, selectedChat, setSelectedChat }) => {
 											className="relative group"
 										>
 											<img
-												src={`http://localhost:5000/uploads/${otherUser?.profilePicture}`|| "/avatar.png"}
+												src={otherUser.profilePicture
+													? `http://localhost:5000/uploads/${otherUser.profilePicture}`
+													: "/avatar.png"}
+
 												alt={otherUser?.name}
 												className="w-10 h-10 rounded-full mr-3 object-cover group-hover:opacity-90 transition-opacity"
 											/>
 										</a>
-										<div 
+										<div
 											className="flex-1 min-w-0 cursor-pointer"
 											onClick={() => setSelectedChat(chat)}
 										>
 											<div className="flex items-center">
 												<h4 className="font-medium text-gray-900 truncate">{otherUser?.name}</h4>
-												<a 
+												<a
 													href={`/profile/${otherUser?.username}`}
 													onClick={(e) => {
 														e.stopPropagation();
