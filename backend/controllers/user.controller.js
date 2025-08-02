@@ -13,7 +13,7 @@ export const getSuggestedConnections = async (req, res) => {
 				{ email: { $regex: search, $options: "i" } }
 			]
 		})
-			.select("name username profilePicture headline location privacySettings")
+			.select("name username profilePicture headline location privacySettings role")
 			.limit(10);
 
 		res.json(suggestedUser);

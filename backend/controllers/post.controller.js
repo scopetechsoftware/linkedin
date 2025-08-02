@@ -3,14 +3,14 @@ import Post from "../models/post.model.js";
 import Notification from "../models/notification.model.js";
 
 export const getFeedPosts = async (req, res) => {
-	try {
-		const posts = await Post.find({ author: { $in: [...req.user.connections, req.user._id] } })
-			.populate("author", "name username profilePicture headline")
-			.populate("comments.user", "name profilePicture")
-			.sort({ createdAt: -1 });
+		try {
+			const posts = await Post.find()
+				.populate("author", "name username profilePicture headline role")
+				.populate("comments.user", "name profilePicture")
+				.sort({ createdAt: -1 });
 
-		res.status(200).json(posts);
-	} catch (error) {
+			res.status(200).json(posts);
+		} catch (error) {
 		console.error("Error in getFeedPosts controller:", error);
 		res.status(500).json({ message: "Server error" });
 	}
@@ -71,14 +71,14 @@ export const deletePost = async (req, res) => {
 };
 
 export const getPostById = async (req, res) => {
-	try {
-		const postId = req.params.id;
-		const post = await Post.findById(postId)
-			.populate("author", "name username profilePicture headline")
-			.populate("comments.user", "name profilePicture username headline");
+		try {
+			const postId = req.params.id;
+			const post = await Post.findById(postId)
+				.populate("author", "name username profilePicture headline role")
+				.populate("comments.user", "name profilePicture username headline role");
 
-		res.status(200).json(post);
-	} catch (error) {
+			res.status(200).json(post);
+		} catch (error) {
 		console.error("Error in getPostById controller:", error);
 		res.status(500).json({ message: "Server error" });
 	}
@@ -176,8 +176,8 @@ export const getPostsByUser = async (req, res) => {
 		}
 
 		const posts = await Post.find({ author: user._id })
-			.populate("author", "name username profilePicture headline")
-			.populate("comments.user", "name profilePicture")
+			.populate("author", "name username profilePicture headline role")
+			.populate("comments.user", "name profilePicture role")
 			.sort({ createdAt: -1 });
 
 		res.status(200).json(posts);

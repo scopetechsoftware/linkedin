@@ -121,6 +121,11 @@ const RecommendedUser = ({ user }) => {
 			/>
 				<div>
 					<h3 className='font-semibold text-sm'>{user.name}</h3>
+					<div className="flex items-center gap-1 mb-1">
+						<span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full capitalize">
+							{user.role}
+						</span>
+					</div>
 					{(() => {
 						// Helper function to safely parse privacySettings
 						const parsePrivacySettings = (settings) => {

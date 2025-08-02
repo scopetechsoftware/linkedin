@@ -104,6 +104,11 @@ const Post = ({ post }) => {
 							<Link to={`/profile/${post?.author?.username}`}>
 								<h3 className='font-semibold'>{post.author.name}</h3>
 							</Link>
+							<div className="flex items-center gap-1 mb-1">
+								<span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full capitalize">
+									{post.author.role}
+								</span>
+							</div>
 							<p className='text-xs text-info'>{post.author.headline}</p>
 							<p className='text-xs text-info'>
 								{formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}

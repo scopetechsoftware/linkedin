@@ -129,10 +129,14 @@ const HomePage = () => {
 					</div>
 
 					<PostCreation user={authUser} />
-					<div className="space-y-4">
-						{posts?.map((post) => (
-							<Post key={post._id} post={post} />
-						))}
+					
+					<div className="bg-white rounded-lg shadow p-4 mb-4">
+						<h2 className="text-xl font-semibold mb-4">All Posts</h2>
+						<div className="space-y-4">
+							{posts?.map((post) => (
+								<Post key={post._id} post={post} />
+							))}
+						</div>
 					</div>
 				</div>
 
