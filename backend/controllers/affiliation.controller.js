@@ -190,11 +190,8 @@ export const getAffiliationsByUsername = async (req, res) => {
             return res.json([]);
         }
         
-        // Only show active affiliations unless the requester is the profile owner
+        // Show all affiliations regardless of active status
         const query = { affiliated: user._id };
-        if (req.user._id.toString() !== user._id.toString()) {
-            query.isActive = true;
-        }
         
         const affiliations = await Affiliation.find(query)
             .populate("affiliator", "name email username profilePicture headline")
@@ -220,11 +217,8 @@ export const getAffiliatorsByUsername = async (req, res) => {
             return res.json([]);
         }
         
-        // Only show active affiliations unless the requester is the profile owner
+        // Show all affiliations regardless of active status
         const query = { affiliated: user._id };
-        if (req.user._id.toString() !== user._id.toString()) {
-            query.isActive = true;
-        }
         
         const affiliations = await Affiliation.find(query)
             .populate("affiliator", "name email username profilePicture headline")
@@ -250,11 +244,8 @@ export const getAffiliatedUsersByUsername = async (req, res) => {
             return res.json([]);
         }
         
-        // Only show active affiliations unless the requester is the profile owner
+        // Show all affiliations regardless of active status
         const query = { affiliator: user._id };
-        if (req.user._id.toString() !== user._id.toString()) {
-            query.isActive = true;
-        }
         
         const affiliations = await Affiliation.find(query)
             .populate("affiliated", "name email username profilePicture headline")

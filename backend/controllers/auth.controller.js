@@ -84,11 +84,10 @@ export const signup = async (req, res) => {
 		await user.save();
 
 		const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "3d" });
-
 		res.cookie("jwt-linkedin", token, {
 			httpOnly: true, // prevent XSS attack
 			maxAge: 3 * 24 * 60 * 60 * 1000,
-			sameSite: "strict", // prevent CSRF attacks,
+			sameSite: "lax", // allow cross-site requests from same domain
 			secure: process.env.NODE_ENV === "production", // prevents man-in-the-middle attacks
 		});
 
@@ -125,7 +124,7 @@ export const login = async (req, res) => {
 		await res.cookie("jwt-linkedin", token, {
 			httpOnly: true,
 			maxAge: 3 * 24 * 60 * 60 * 1000,
-			sameSite: "strict",
+			sameSite: "lax",
 			secure: process.env.NODE_ENV === "production",
 		});
 
