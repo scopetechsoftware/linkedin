@@ -153,7 +153,7 @@ export default function ProfileSharePage() {
                     <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
                         <h2 className="text-2xl font-bold mb-6">Organizations & Companies</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {userAffiliators?.filter(affiliation => affiliation.isActive).map(affiliation => {
+                            {userAffiliators?.map(affiliation => {
                                 const org = affiliation.affiliator;
                                 const getOrgType = (role) => {
                                     switch (role) {
@@ -172,7 +172,7 @@ export default function ProfileSharePage() {
                                 const orgDisplayName = org.name || org.username;
                                 
                                 return (
-                                    <div key={affiliation._id} className="bg-gray-50 rounded-lg p-4">
+                                    <div key={affiliation._id} className={`bg-gray-50 rounded-lg p-4 ${!affiliation.isActive ? 'opacity-70' : ''}`}>
                                         <div className="flex items-center mb-4">
                                             <Link to={`/profile/${org.username}`}>
                                                 <img
@@ -185,7 +185,14 @@ export default function ProfileSharePage() {
                                                 <Link to={`/profile/${org.username}`} className="hover:text-primary transition-colors">
                                                     <h3 className="font-semibold text-lg">{orgDisplayName}</h3>
                                                 </Link>
-                                                <p className="text-gray-600">{getOrgType(org.role)}</p>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-gray-600">{getOrgType(org.role)}</p>
+                                                    {!affiliation.isActive && (
+                                                        <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
+                                                            Deactivated
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                         <p className="text-gray-700">{org.headline}</p>
@@ -199,7 +206,7 @@ export default function ProfileSharePage() {
                     <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
                         <h2 className="text-2xl font-bold mb-6">Affiliations</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {userAffiliations?.filter(affiliation => affiliation.isActive).map(affiliation => (
+                            {userAffiliations?.map(affiliation => (
                                 <div key={affiliation._id} className="bg-gray-50 rounded-lg p-4">
                                     <div className="flex items-center mb-4">
                                         <Link to={`/profile/${affiliation.affiliator?.username}`}>
@@ -213,7 +220,14 @@ export default function ProfileSharePage() {
                                             <Link to={`/profile/${affiliation.affiliator?.username}`} className="hover:text-primary transition-colors">
                                                 <h3 className="font-semibold text-lg">{affiliation.affiliator?.name}</h3>
                                             </Link>
-                                            <p className="text-gray-600">{affiliation.role}</p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-gray-600">{affiliation.role}</p>
+                                                {!affiliation.isActive && (
+                                                    <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
+                                                        Inactive
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                     <p className="text-gray-700">{affiliation.description}</p>

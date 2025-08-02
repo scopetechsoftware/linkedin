@@ -51,7 +51,8 @@ const AffiliationsPage = () => {
             await axiosInstance.put(`/affiliations/${affiliationId}`, { isActive });
         },
         onSuccess: (_, variables) => {
-            toast.success("Affiliation deactivated permanently");
+            const message = variables.isActive ? "Affiliation activated successfully" : "Affiliation deactivated successfully";
+            toast.success(message);
             
             // Invalidate all affiliation-related queries
             queryClient.invalidateQueries({ queryKey: ["affiliations"] });
@@ -63,7 +64,7 @@ const AffiliationsPage = () => {
             queryClient.invalidateQueries({ queryKey: ["userAffiliations", user?.username] });
         },
         onError: (err) => {
-            toast.error(err.response?.data?.message || "Failed to deactivate affiliation");
+            toast.error(err.response?.data?.message || "Failed to update affiliation status");
         },
     });
 
@@ -74,8 +75,13 @@ const AffiliationsPage = () => {
     };
     
     const handleToggleStatus = (affiliationId, currentStatus) => {
-        if (window.confirm("Are you sure you want to deactivate this affiliation? This action cannot be undone and the user cannot be reactivated.")) {
-            toggleAffiliationStatus({ affiliationId, isActive: false });
+        const newStatus = !currentStatus;
+        const message = newStatus 
+            ? "Are you sure you want to activate this affiliation?" 
+            : "Are you sure you want to deactivate this affiliation?";
+            
+        if (window.confirm(message)) {
+            toggleAffiliationStatus({ affiliationId, isActive: newStatus });
         }
     };
 
@@ -168,16 +174,17 @@ const AffiliationsPage = () => {
                                             {affiliation.isActive ? 'Active' : 'Deactivated'}
                                         </div>
                                         
-                                        {/* Only show deactivate button for active affiliations */}
-                                        {affiliation.isActive && (
+                                        {/* Toggle status button */}
                                         <button
                                             onClick={() => handleToggleStatus(affiliation._id, affiliation.isActive)}
-                                                className="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded-full transition-colors"
-                                                title="Deactivate affiliation (permanent)"
+                                            className={`${affiliation.isActive 
+                                                ? 'text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100' 
+                                                : 'text-green-500 hover:text-green-700 bg-green-50 hover:bg-green-100'} 
+                                                p-2 rounded-full transition-colors`}
+                                            title={affiliation.isActive ? "Deactivate affiliation" : "Activate affiliation"}
                                         >
-                                                <XCircle size={18} />
+                                            {affiliation.isActive ? <XCircle size={18} /> : <CheckCircle size={18} />}
                                         </button>
-                                        )}
                                         
                                         {/* Delete button */}
                                         <button

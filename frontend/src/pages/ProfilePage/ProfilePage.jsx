@@ -295,7 +295,7 @@ const ProfilePage = () => {
 										<Link 
 											key={affiliation._id} 
 											to={`/profile/${org.username}`}
-											className={`block bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors ${!affiliation.isActive && isOwnProfile ? 'opacity-70' : ''}`}
+											className={`block bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors ${!affiliation.isActive ? 'opacity-70' : ''}`}
 										>
 											<div className="flex items-start justify-between">
 												<div className="flex items-center">
@@ -322,7 +322,7 @@ const ProfilePage = () => {
 																{formatDate(affiliation.startDate)} - {formatDate(affiliation.endDate)}
 															</span>
 														</div>
-														{isOwnProfile && !affiliation.isActive && (
+														{!affiliation.isActive && (
 															<div className="flex items-center mt-1 text-sm text-red-500">
 																<XCircle className="mr-2" size={16} />
 																<span>Deactivated</span>
@@ -330,21 +330,19 @@ const ProfilePage = () => {
 														)}
 													</div>
 												</div>
-												{isOwnProfile && (
-													<div className="flex-shrink-0">
-														{affiliation.isActive ? (
-															<div className="text-green-500 flex items-center">
-																<CheckCircle size={16} className="mr-1" />
-																<span className="text-xs">Active</span>
-															</div>
-														) : (
-															<div className="text-red-500 flex items-center">
-																<XCircle size={16} className="mr-1" />
-																<span className="text-xs">Inactive</span>
-															</div>
-														)}
-													</div>
-												)}
+												<div className="flex-shrink-0">
+													{affiliation.isActive ? (
+														<div className="text-green-500 flex items-center">
+															<CheckCircle size={16} className="mr-1" />
+															<span className="text-xs">Active</span>
+														</div>
+													) : (
+														<div className="text-red-500 flex items-center">
+															<XCircle size={16} className="mr-1" />
+															<span className="text-xs">Inactive</span>
+														</div>
+													)}
+												</div>
 											</div>
 										</Link>
 									);
@@ -380,7 +378,7 @@ const ProfilePage = () => {
 										<Link 
 											key={affiliation._id} 
 											to={`/profile/${user.username}`}
-											className={`block bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors ${!affiliation.isActive && isOwnProfile ? 'opacity-70' : ''}`}
+											className={`block bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors ${!affiliation.isActive ? 'opacity-70' : ''}`}
 										>
 											<div className="flex items-start justify-between">
 												<div className="flex items-center">
@@ -407,7 +405,7 @@ const ProfilePage = () => {
 																{formatDate(affiliation.startDate)} - {formatDate(affiliation.endDate)}
 															</span>
 														</div>
-														{isOwnProfile && !affiliation.isActive && (
+														{!affiliation.isActive && (
 															<div className="flex items-center mt-1 text-sm text-red-500">
 																<XCircle className="mr-2" size={16} />
 																<span>Deactivated</span>
@@ -415,21 +413,19 @@ const ProfilePage = () => {
 														)}
 													</div>
 												</div>
-												{isOwnProfile && (
-													<div className="flex-shrink-0">
-														{affiliation.isActive ? (
-															<div className="text-green-500 flex items-center">
-																<CheckCircle size={16} className="mr-1" />
-																<span className="text-xs">Active</span>
-															</div>
-														) : (
-															<div className="text-red-500 flex items-center">
-																<XCircle size={16} className="mr-1" />
-																<span className="text-xs">Inactive</span>
-															</div>
-														)}
-													</div>
-												)}
+												<div className="flex-shrink-0">
+													{affiliation.isActive ? (
+														<div className="text-green-500 flex items-center">
+															<CheckCircle size={16} className="mr-1" />
+															<span className="text-xs">Active</span>
+														</div>
+													) : (
+														<div className="text-red-500 flex items-center">
+															<XCircle size={16} className="mr-1" />
+															<span className="text-xs">Inactive</span>
+														</div>
+													)}
+												</div>
 											</div>
 										</Link>
 									);
