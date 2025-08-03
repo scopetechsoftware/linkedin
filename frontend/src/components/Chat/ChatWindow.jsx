@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "../../lib/axios";
 import { format } from "date-fns";
@@ -12,7 +12,9 @@ const ChatWindow = ({ isOpen, onClose, selectedChat, setSelectedChat }) => {
 	const [typingTimeout, setTypingTimeout] = useState(null);
 	const [selectedMessageId, setSelectedMessageId] = useState(null);
 	const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+	const [isAtBottom, setIsAtBottom] = useState(true);
 	const messagesEndRef = useRef(null);
+	const messagesContainerRef = useRef(null);
 	const queryClient = useQueryClient();
 	const { socket } = useSocket();
 	const { data: authUser } = useQuery({ queryKey: ["authUser"] });
@@ -56,17 +58,26 @@ const ChatWindow = ({ isOpen, onClose, selectedChat, setSelectedChat }) => {
 			return persistedData ? JSON.parse(persistedData) : undefined;
 		},
 		onSuccess: (data) => {
+			// Ensure we're setting the messages state with the latest data
 			setMessages(data);
 			// Store the data in localStorage
 			if (selectedChat) {
 				localStorage.setItem(`query-chatMessages-${selectedChat._id}`, JSON.stringify(data));
 			}
-			// Scroll to bottom when messages are loaded
+			// Scroll to bottom when messages are initially loaded
 			setTimeout(() => {
 				messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+				setIsAtBottom(true);
 			}, 100);
 		},
 	});
+
+	// Ensure messages state is updated when chatMessages changes
+	useEffect(() => {
+		if (chatMessages) {
+			setMessages(chatMessages);
+		}
+	}, [chatMessages]);
 
 	// Send message mutation
 	const { mutate: sendMessage } = useMutation({
@@ -133,11 +144,40 @@ const ChatWindow = ({ isOpen, onClose, selectedChat, setSelectedChat }) => {
 		// Listen for new messages
 		const handleReceiveMessage = (newMessage) => {
 			if (newMessage.chatId === selectedChat._id) {
+				// Check if user is at bottom before adding the new message
+				checkIfAtBottom();
+				
 				setMessages((prev) => {
-					const updatedMessages = [...prev, newMessage];
-					// Update localStorage with the new messages
-					localStorage.setItem(`query-chatMessages-${selectedChat._id}`, JSON.stringify(updatedMessages));
-					return updatedMessages;
+					// Check if this message already exists (to avoid duplicates from optimistic updates)
+					const messageExists = prev.some(msg => 
+						// Check for server-generated ID match
+						msg._id === newMessage._id ||
+						// Check for optimistic message with same content and timestamp (within 2 seconds)
+						(msg.content === newMessage.content && 
+						 msg.sender._id === newMessage.sender._id && 
+						 Math.abs(new Date(msg.createdAt) - new Date(newMessage.createdAt)) < 2000)
+					);
+
+					if (messageExists) {
+						// Replace the optimistic message with the server version
+						const updatedMessages = prev.map(msg => {
+							if (msg.content === newMessage.content && 
+								msg.sender._id === newMessage.sender._id && 
+								Math.abs(new Date(msg.createdAt) - new Date(newMessage.createdAt)) < 2000) {
+								return newMessage; // Replace with server version
+							}
+							return msg;
+						});
+						// Update localStorage
+						localStorage.setItem(`query-chatMessages-${selectedChat._id}`, JSON.stringify(updatedMessages));
+						return updatedMessages;
+					} else {
+						// Add new message
+						const updatedMessages = [...prev, newMessage];
+						// Update localStorage
+						localStorage.setItem(`query-chatMessages-${selectedChat._id}`, JSON.stringify(updatedMessages));
+						return updatedMessages;
+					}
 				});
 
 				// If the message is from the other user, mark it as read
@@ -211,10 +251,33 @@ const ChatWindow = ({ isOpen, onClose, selectedChat, setSelectedChat }) => {
 		};
 	}, [socket, selectedChat, authUser]);
 
-	// Scroll to bottom when messages change
+	// Check if user is at bottom of chat
+	const checkIfAtBottom = useCallback(() => {
+		if (!messagesContainerRef.current) return;
+		
+		const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+		// Consider "at bottom" if within 50px of the bottom
+		const isAtBottomNow = scrollHeight - scrollTop - clientHeight < 50;
+		setIsAtBottom(isAtBottomNow);
+	}, []);
+
+	// Add scroll event listener to track if user is at bottom
 	useEffect(() => {
-		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-	}, [messages]);
+		const container = messagesContainerRef.current;
+		if (!container) return;
+
+		container.addEventListener('scroll', checkIfAtBottom);
+		return () => {
+			container.removeEventListener('scroll', checkIfAtBottom);
+		};
+	}, [checkIfAtBottom]);
+
+	// Only scroll to bottom when messages change if user was already at bottom
+	useEffect(() => {
+		if (isAtBottom) {
+			messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+		}
+	}, [messages, isAtBottom]);
 
 	// Clear messages when chat is deselected
 	useEffect(() => {
@@ -266,23 +329,50 @@ const ChatWindow = ({ isOpen, onClose, selectedChat, setSelectedChat }) => {
 		e.preventDefault();
 		if (!message.trim() || !selectedChat) return;
 
+		// Always scroll to bottom when sending a message
+		setIsAtBottom(true);
+
+		const messageContent = message.trim();
+		setMessage(""); // Clear input immediately for better UX
+
 		// Use socket to send message
 		if (socket) {
+			// Optimistically add the message to the UI
+			const optimisticMessage = {
+				_id: Date.now().toString(), // Temporary ID
+				chatId: selectedChat._id,
+				content: messageContent,
+				sender: authUser,
+				createdAt: new Date().toISOString(),
+				read: false
+			};
+
+			// Update messages state with the new message
+			setMessages(prev => {
+				const updatedMessages = [...prev, optimisticMessage];
+				// Update localStorage
+				localStorage.setItem(`query-chatMessages-${selectedChat._id}`, JSON.stringify(updatedMessages));
+				return updatedMessages;
+			});
+
+			// Send the message via socket
 			socket.emit("send_message", {
 				chatId: selectedChat._id,
-				content: message.trim(),
-
+				content: messageContent,
 			});
-			setMessage("");
 		} else {
 			// Fallback to REST API if socket is not available
-			sendMessage(message.trim());
+			sendMessage(messageContent);
 		}
 
 		// Clear typing indicator
 		if (typingTimeout) clearTimeout(typingTimeout);
 		if (socket) socket.emit("stop_typing", { chatId: selectedChat._id });
 
+		// Ensure we scroll to bottom after sending
+		setTimeout(() => {
+			messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+		}, 100);
 	};
 
 	const handleBackToList = () => {
@@ -329,7 +419,7 @@ const ChatWindow = ({ isOpen, onClose, selectedChat, setSelectedChat }) => {
 			</div>
 
 			{/* Chat Content */}
-			<div className="flex-1 overflow-y-auto max-h-96 p-3 bg-gray-50">
+			<div ref={messagesContainerRef} className="flex-1 overflow-y-auto max-h-96 p-3 bg-gray-50">
 				{selectedChat ? (
 					<>
 						{/* Back button */}
@@ -344,7 +434,7 @@ const ChatWindow = ({ isOpen, onClose, selectedChat, setSelectedChat }) => {
 						<div className="space-y-3">
 							{isLoadingMessages ? (
 								<p className="text-center text-gray-500 py-4">Loading messages...</p>
-							) : messages?.length > 0 ? (
+							) : messages && messages.length > 0 ? (
 								messages.map((msg) => (
 									<div
 										key={msg._id}
@@ -390,7 +480,7 @@ const ChatWindow = ({ isOpen, onClose, selectedChat, setSelectedChat }) => {
 										{selectedMessageId === msg._id && msg.sender._id === authUser._id && (
 											<button
 												onClick={() => handleDeleteMessage(msg._id)}
-												className={`absolute ${msg.sender._id === authUser._id ? "left-0" : "right-0"} top-0 -mt-2 ${msg.sender._id === authUser._id ? "-ml-8" : "-mr-8"} bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition-colors message-bubble`}
+												className={`absolute ${msg.sender._id === authUser._id ? "right-100" : "left-full"} bottom-0 -mt-3 ${msg.sender._id === authUser._id ? "mr-15" : "ml-15"}  text-white p-0 rounded-full hover:bg-red-600 transition-colors message-bubble `}
 												title="Delete message"
 											>
 												<Trash2 size={16} />
