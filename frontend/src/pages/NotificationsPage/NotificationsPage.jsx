@@ -162,6 +162,8 @@ const NotificationsPage = () => {
 				return <Share2 className='text-blue-500' />;
 			case "projectRated":
 				return <Star className='text-yellow-500' />;
+			case "profileVisit":
+				return <Eye className='text-indigo-500' />;
 			default:
 				return null;
 		}
@@ -227,6 +229,26 @@ const NotificationsPage = () => {
 							className='text-sm text-gray-500 hover:underline flex items-center gap-1'
 						>
 							<ExternalLink className='h-3 w-3' /> View profile
+						</Link>
+					</div>
+				);
+			case "profileVisit":
+				return (
+					<div className='flex flex-col'>
+						<p>
+							<Link
+								to={`/profile/${notification.relatedUser.username}`}
+								className='font-semibold hover:underline'
+							>
+								{notification.relatedUser.name}
+							</Link>{" "}
+							visited your profile
+						</p>
+						<Link
+							to={`/profile/${notification.relatedUser.username}`}
+							className='text-sm text-gray-500 hover:underline flex items-center gap-1'
+						>
+							<ExternalLink className='h-3 w-3' /> View their profile
 						</Link>
 					</div>
 				);

@@ -10,7 +10,7 @@ const notificationSchema = new mongoose.Schema(
 		type: {
 			type: String,
 			required: true,
-			enum: ["like", "comment", "connectionAccepted", "projectShared", "projectRated"],
+			enum: ["like", "comment", "connectionAccepted", "projectShared", "projectRated", "profileVisit"],
 		},
 		relatedUser: {
 			type: mongoose.Schema.Types.ObjectId,

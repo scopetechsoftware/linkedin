@@ -302,38 +302,39 @@ const SettingsPage = () => {
         </div>
 
         {/* Navigation Tabs */}
-        <div className="mt-20 px-8 border-b">
-          <div className="flex space-x-8">
-            <button
-              className={`py-4 px-2 ${activeTab === 'profile' ? 'border-b-2 border-primary text-primary font-medium' : 'text-gray-500'}`}
-              onClick={() => setActiveTab('profile')}
-            >
-              <User size={16} className="inline mr-2" />
-              Profile
-            </button>
-            <button
-              className={`py-4 px-2 ${activeTab === 'experience' ? 'border-b-2 border-primary text-primary font-medium' : 'text-gray-500'}`}
-              onClick={() => setActiveTab('experience')}
-            >
-              <Briefcase size={16} className="inline mr-2" />
-              Experience
-            </button>
-            <button
-              className={`py-4 px-2 ${activeTab === 'education' ? 'border-b-2 border-primary text-primary font-medium' : 'text-gray-500'}`}
-              onClick={() => setActiveTab('education')}
-            >
-              <GraduationCap size={16} className="inline mr-2" />
-              Education
-            </button>
-            <button
-              className={`py-4 px-2 ${activeTab === 'skills' ? 'border-b-2 border-primary text-primary font-medium' : 'text-gray-500'}`}
-              onClick={() => setActiveTab('skills')}
-            >
-              <Code size={16} className="inline mr-2" />
-              Skills
-            </button>
-          </div>
-        </div>
+        <div className="mt-20 px-4 border-b">
+  <div className="flex space-x-4 overflow-x-auto scrollbar-hide">
+    <button
+      className={`flex-shrink-0 py-4 px-2 ${activeTab === 'profile' ? 'border-b-2 border-primary text-primary font-medium' : 'text-gray-500'}`}
+      onClick={() => setActiveTab('profile')}
+    >
+      <User size={16} className="inline mr-2" />
+      Profile
+    </button>
+    <button
+      className={`flex-shrink-0 py-4 px-2 ${activeTab === 'experience' ? 'border-b-2 border-primary text-primary font-medium' : 'text-gray-500'}`}
+      onClick={() => setActiveTab('experience')}
+    >
+      <Briefcase size={16} className="inline mr-2" />
+      Experience
+    </button>
+    <button
+      className={`flex-shrink-0 py-4 px-2 ${activeTab === 'education' ? 'border-b-2 border-primary text-primary font-medium' : 'text-gray-500'}`}
+      onClick={() => setActiveTab('education')}
+    >
+      <GraduationCap size={16} className="inline mr-2" />
+      Education
+    </button>
+    <button
+      className={`flex-shrink-0 py-4 px-2 ${activeTab === 'skills' ? 'border-b-2 border-primary text-primary font-medium' : 'text-gray-500'}`}
+      onClick={() => setActiveTab('skills')}
+    >
+      <Code size={16} className="inline mr-2" />
+      Skills
+    </button>
+  </div>
+</div>
+
 
         {/* Form Content */}
         <form onSubmit={handleSubmit} className="p-8">

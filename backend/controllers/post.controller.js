@@ -1,6 +1,7 @@
 import { sendCommentNotificationEmail } from "../emails/emailHandlers.js";
 import Post from "../models/post.model.js";
 import Notification from "../models/notification.model.js";
+import { io } from "../socket.js";
 
 export const getFeedPosts = async (req, res) => {
 		try {
@@ -106,6 +107,13 @@ export const createComment = async (req, res) => {
 			});
 
 			await newNotification.save();
+			
+			// Populate the notification with related data
+			await newNotification.populate("relatedUser", "name username profilePicture");
+			await newNotification.populate("relatedPost", "content image");
+			
+			// Emit socket event to the recipient
+			io.to(post.author._id.toString()).emit("new_notification", newNotification);
 
 			// send email
             try {

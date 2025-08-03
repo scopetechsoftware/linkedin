@@ -2,6 +2,7 @@ import Project from "../models/project.model.js";
 import ProjectRating from "../models/projectRating.model.js";
 import Notification from "../models/notification.model.js";
 import User from "../models/user.model.js";
+import { io } from "../socket.js";
 
 // Create a new project
 export const createProject = async (req, res) => {
@@ -330,6 +331,13 @@ export const rateProject = async (req, res) => {
 			comment
 		});
 		await notification.save();
+		
+		// Populate the notification with related data
+		await notification.populate("relatedUser", "name username profilePicture");
+		await notification.populate("relatedProject", "name description gitlink projecturl collaborators");
+		
+		// Emit socket event to the recipient
+		io.to(project.owner.toString()).emit("new_notification", notification);
 
 		res.status(201).json(newRating);
 	} catch (error) {

@@ -22,7 +22,7 @@ const ProfilePage = () => {
 
 	const { data: userProfile, isLoading: isUserProfileLoading } = useQuery({
 		queryKey: ["userProfile", username],
-		queryFn: () => axiosInstance.get(`/users/${username}`),
+		queryFn: () => axiosInstance.get(`/users/profile/${username}`),
 	});
 
 	// Fetch affiliations for this user

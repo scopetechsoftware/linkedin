@@ -23,12 +23,19 @@ export const getSuggestedConnections = async (req, res) => {
 	}
 };
 
+import { createProfileVisitNotification } from "./notification.controller.js";
+
 export const getPublicProfile = async (req, res) => {
 	try {
 		const user = await User.findOne({ username: req.params.username }).select("-password");
 
 		if (!user) {
 			return res.status(404).json({ message: "User not found" });
+		}
+
+		// Create profile visit notification
+		if (req.user && user) {
+			await createProfileVisitNotification(req.user._id, user._id);
 		}
 
 		// Check if the profile is private and the requester is not the profile owner
@@ -151,6 +158,7 @@ export const updateProfile = async (req, res) => {
 export const searchUser = async (req, res) => {
   try {
     const { username, email } = req.query;
+    const isAISearch = req.query.source === 'ai';
     
     if (!username && !email) {
       return res.status(400).json({ message: "Username or email is required" });
@@ -170,6 +178,17 @@ export const searchUser = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
+    }
+
+    // Create notification if this is an AI search and the requester is authenticated
+    if (isAISearch && req.user && req.user._id) {
+      try {
+        const { createAIProfileSearchNotification } = await import("./notification.controller.js");
+        await createAIProfileSearchNotification(req.user._id, user._id);
+      } catch (notificationError) {
+        console.error("Error creating AI search notification:", notificationError);
+        // Continue with the response even if notification creation fails
+      }
     }
 
     // Check if the profile is private

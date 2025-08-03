@@ -25,9 +25,9 @@ const ChatButton = ({ userId, isConnected, onChatStart }) => {
 		<button
 			onClick={() => startChat()}
 			disabled={isLoading}
-			className="bg-primary hover:bg-primary-dark text-white py-2 px-4 rounded-full transition duration-300 flex items-center justify-center"
+			className="bg-primary hover:bg-primary-dark text-white py-1.5 sm:py-2 px-3 sm:px-4 rounded-full transition duration-300 flex items-center justify-center text-xs sm:text-sm"
 		>
-			<MessageSquare size={20} className="mr-2" />
+			<MessageSquare size={16} className="mr-1 sm:mr-2" />
 			Message
 		</button>
 	);

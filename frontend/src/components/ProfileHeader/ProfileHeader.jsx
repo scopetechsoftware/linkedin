@@ -85,13 +85,13 @@ const ProfileHeader = ({ userData, onSave, isOwnProfile }) => {
 			return null;
 		}
 		
-		const baseClass = "text-white py-2 px-4 rounded-full transition duration-300 flex items-center justify-center";
+		const baseClass = "text-white py-1.5 sm:py-2 px-3 sm:px-4 rounded-full transition duration-300 flex items-center justify-center text-xs sm:text-sm";
 		switch (getConnectionStatus) {
 			case "connected":
 				return (
-					<div className='flex gap-2 justify-center'>
-						<div className={`${baseClass} bg-green-500 hover:bg-green-600`}>
-							<UserCheck size={20} className='mr-2' />
+					<div className='flex flex-wrap gap-2 justify-center'>
+						<div className={`${baseClass} bg-green-500 hover:bg-green-600 text-xs sm:text-sm`}>
+							<UserCheck size={16} className='mr-1 sm:mr-2' />
 							Connected
 						</div>
 						<ChatButton 
@@ -103,36 +103,39 @@ const ProfileHeader = ({ userData, onSave, isOwnProfile }) => {
 							}} 
 						/>
 						<button
-							className={`${baseClass} bg-red-500 hover:bg-red-600 text-sm`}
+							className={`${baseClass} bg-red-500 hover:bg-red-600 text-xs sm:text-sm`}
 							onClick={() => removeConnection(userData._id)}
 						>
-							<X size={20} className='mr-2' />
-							Remove Connection
+							<X size={16} className='mr-1 sm:mr-2' />
+							<span className="hidden xs:inline">Remove</span>
+							<span className="xs:hidden">X</span>
 						</button>
 					</div>
 				);
 
 			case "pending":
 				return (
-					<button className={`${baseClass} bg-yellow-500 hover:bg-yellow-600`}>
-						<Clock size={20} className='mr-2' />
+					<button className={`${baseClass} bg-yellow-500 hover:bg-yellow-600 text-xs sm:text-sm`}>
+						<Clock size={16} className='mr-1 sm:mr-2' />
 						Pending
 					</button>
 				);
 
 			case "received":
 				return (
-					<div className='flex gap-2 justify-center'>
+					<div className='flex flex-wrap gap-2 justify-center'>
 						<button
 							onClick={() => acceptRequest(connectionStatus.data.requestId)}
-							className={`${baseClass} bg-green-500 hover:bg-green-600`}
+							className={`${baseClass} bg-green-500 hover:bg-green-600 text-xs sm:text-sm py-1.5 sm:py-2 px-3 sm:px-4`}
 						>
+							<CheckCircle size={16} className='mr-1 sm:mr-2' />
 							Accept
 						</button>
 						<button
 							onClick={() => rejectRequest(connectionStatus.data.requestId)}
-							className={`${baseClass} bg-red-500 hover:bg-red-600`}
+							className={`${baseClass} bg-red-500 hover:bg-red-600 text-xs sm:text-sm py-1.5 sm:py-2 px-3 sm:px-4`}
 						>
+							<X size={16} className='mr-1 sm:mr-2' />
 							Reject
 						</button>
 					</div>
@@ -141,9 +144,9 @@ const ProfileHeader = ({ userData, onSave, isOwnProfile }) => {
 				return (
 					<button
 						onClick={() => sendConnectionRequest(userData._id)}
-						className='bg-primary hover:bg-primary-dark text-white py-2 px-4 rounded-full transition duration-300 flex items-center justify-center'
+						className='bg-primary hover:bg-primary-dark text-white py-1.5 sm:py-2 px-3 sm:px-4 rounded-full transition duration-300 flex items-center justify-center text-xs sm:text-sm'
 					>
-						<UserPlus size={20} className='mr-2' />
+						<UserPlus size={16} className='mr-1 sm:mr-2' />
 						Connect
 					</button>
 				);
@@ -360,19 +363,21 @@ const ProfileHeader = ({ userData, onSave, isOwnProfile }) => {
 				{isOwnProfile ? (
 					isEditing ? (
 						<button
-							className='w-full bg-primary text-white py-2 px-4 rounded-full hover:bg-primary-dark
-							 transition duration-300'
+							className='w-full bg-primary text-white py-1.5 sm:py-2 px-3 sm:px-4 rounded-full hover:bg-primary-dark
+							 transition duration-300 text-xs sm:text-sm flex items-center justify-center'
 							onClick={handleSave}
 						>
-							Save Profile
+							<span className="hidden xs:inline">Save Profile</span>
+							<span className="xs:hidden">Save</span>
 						</button>
 					) : (
 						<button
 							onClick={() => setIsEditing(true)}
-							className='w-full bg-primary text-white py-2 px-4 rounded-full hover:bg-primary-dark
-							 transition duration-300'
+							className='w-full bg-primary text-white py-1.5 sm:py-2 px-3 sm:px-4 rounded-full hover:bg-primary-dark
+							 transition duration-300 text-xs sm:text-sm flex items-center justify-center'
 						>
-							Edit Profile
+							<span className="hidden xs:inline">Edit Profile</span>
+							<span className="xs:hidden">Edit</span>
 						</button>
 					)
 				) : (

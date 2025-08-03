@@ -3,6 +3,7 @@ import { X, Send, User, Mail, Building, Users, Award, Calendar, MapPin, Brain } 
 import { axiosInstance } from "../../lib/axios";
 import { useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { Link } from "react-router-dom";
 
 const AIChatWindow = ({ isOpen, onClose }) => {
   const [username, setUsername] = useState("");
@@ -15,6 +16,8 @@ const AIChatWindow = ({ isOpen, onClose }) => {
       const params = new URLSearchParams();
       if (username) params.append("username", username);
       if (email) params.append("email", email);
+      // Add source parameter to indicate this is an AI search
+      params.append("source", "ai");
       
       const response = await axiosInstance.get(`/users/search?${params.toString()}`);
       return response.data;
@@ -163,6 +166,15 @@ const AIChatWindow = ({ isOpen, onClose }) => {
                 </div>
               </div>
               
+              {/* View Profile Button */}
+              <Link 
+                to={`/profile/${userData.username}`} 
+                className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors mt-2 mb-3"
+                onClick={() => onClose()} // Close the AI chat window when navigating to profile
+              >
+                View Full Profile
+              </Link>
+              
               <div className="space-y-2">
                 {!userData.privacySettings?.isProfilePrivate && (
                   <div className="flex items-center space-x-2 text-sm">
@@ -282,4 +294,4 @@ const AIChatWindow = ({ isOpen, onClose }) => {
   );
 };
 
-export default AIChatWindow; 
+export default AIChatWindow;

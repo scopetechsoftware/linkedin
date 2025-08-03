@@ -3,7 +3,6 @@ dotenv.config();
 
 import express from "express";
 import { createServer } from "http";
-import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
 import authRoutes from './routes/auth.route.js';
 import userRoutes from './routes/user.route.js';
@@ -19,18 +18,13 @@ import { connectDB } from "./lib/db.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import { Chat, Message } from "./models/chat.model.js";
+import { initializeSocketIO, io } from "./socket.js";
 
 const app = express();
 const server = createServer(app);
 
-const io = new Server(server, {
-    cors: {
-        origin: ["http://localhost:5173", "http://localhost:5174", "http://localhost:5175"],
-        credentials: true,
-        methods: ["GET", "POST"]
-    },
-    transports: ["websocket", "polling"]
-});
+// Initialize Socket.IO using the socket.js module
+initializeSocketIO(server);
 
 // Socket.IO middleware for authentication
 io.use(async (socket, next) => {
@@ -182,7 +176,15 @@ io.on("connection", (socket) => {
                 relatedProject: projectId
             });
             await notification.save();
+            
+            // Populate the notification with related data
+            await notification.populate("relatedUser", "name username profilePicture");
+            await notification.populate("relatedProject", "name description gitlink projecturl collaborators");
+            
             console.log("Created notification:", notification);
+            
+            // Emit new_notification event to the recipient
+            io.to(toUserId.toString()).emit("new_notification", notification);
 
             // Check if recipient is connected
             const recipientSocketId = Object.keys(io.sockets.adapter.rooms.get(toUserId.toString()) || {});

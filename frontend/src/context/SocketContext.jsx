@@ -49,6 +49,17 @@ export const SocketProvider = ({ children }) => {
             newSocket.on("project_shared", (data) => {
                 console.log("Received project_shared event:", data);
                 setLastSharedProject(data);
+                // Invalidate notifications query to update the badge
+                queryClient.invalidateQueries(["notifications"]);
+            });
+            
+            // Listen for new notifications
+            newSocket.on("new_notification", (data) => {
+                console.log("Received new notification:", data);
+                // Invalidate the notifications query to update the badge and notification list
+                queryClient.invalidateQueries(["notifications"]);
+                // Show a toast notification
+                toast.success("New notification received");
             });
             
             // Listen for new messages to update unread count
@@ -82,6 +93,7 @@ export const SocketProvider = ({ children }) => {
                 newSocket.off("disconnect");
                 newSocket.off("connect_error");
                 newSocket.off("project_shared");
+                newSocket.off("new_notification");
                 newSocket.off("receive_message");
                 newSocket.off("messages_read");
                 newSocket.off("chat_updated");
