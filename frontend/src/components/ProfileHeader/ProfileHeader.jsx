@@ -177,9 +177,9 @@ const ProfileHeader = ({ userData, onSave, isOwnProfile }) => {
 
 	return (
 		<>
-			<div className='bg-white shadow rounded-lg mb-6'>
+			<div className='bg-white shadow rounded-lg mb-4 lg:mb-6'>
 				<div
-					className='relative h-48 rounded-t-lg bg-cover bg-center'
+					className='relative h-32 lg:h-48 rounded-t-lg bg-cover bg-center'
 					style={{
 						backgroundImage: `url('${editedData.bannerImgPreview || (userData.bannerImg ? `http://localhost:5000/uploads/${userData.bannerImg}` : "/banner.png")}')`,
 					}}
@@ -198,10 +198,10 @@ const ProfileHeader = ({ userData, onSave, isOwnProfile }) => {
 				)}
 			</div>
 
-			<div className='p-4'>
-				<div className='relative -mt-20 mb-4'>
+			<div className='p-3 lg:p-4'>
+				<div className='relative -mt-16 lg:-mt-20 mb-4'>
 					<img
-						className='w-32 h-32 rounded-full mx-auto object-cover'
+						className='w-24 h-24 lg:w-32 lg:h-32 rounded-full mx-auto object-cover'
 						src={editedData.profilePicturePreview || (userData.profilePicture ? `http://localhost:5000/uploads/${userData.profilePicture}` : "/avatar.png")}
 						alt={userData.name}
 					/>
@@ -237,8 +237,8 @@ const ProfileHeader = ({ userData, onSave, isOwnProfile }) => {
 							className='text-2xl font-bold mb-2 text-center w-full'
 						/>
 					) : (
-						<div className="flex items-center justify-center gap-2 mb-2">
-							<h1 className='text-2xl font-bold'>{userData.name}</h1>
+						<div className="flex items-center justify-center gap-2 mb-2 flex-wrap">
+							<h1 className='text-xl lg:text-2xl font-bold'>{userData.name}</h1>
 							{userData.privacySettings?.isProfilePrivate && !isOwnProfile && (
 								<span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full flex items-center">
 									<svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">

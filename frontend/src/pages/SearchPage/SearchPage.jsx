@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { Search, Users, Briefcase, FileText, Building, MapPin, TrendingUp, Star, Calendar, MessageCircle, Heart, Share2, ArrowRight, Sparkles, Plus } from 'lucide-react';
+import { Search, Users, Briefcase, FileText, Building, MapPin, TrendingUp, Star, Calendar, MessageCircle, Heart, Share2, ArrowRight, Sparkles, Plus, Clock } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { axiosInstance } from '../../lib/axios';
 import UserCard from '../../components/UserCard/UserCard';
 import ErrorBoundary from '../../components/ErrorBoundary/ErrorBoundary';
 import JobPostingForm from '../../components/JobPostingForm/JobPostingForm';
+import { formatDistanceToNow } from 'date-fns';
 
 const SearchPageContent = () => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -274,6 +275,10 @@ const SearchPageContent = () => {
                                                     <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
                                                         ${job.package}
                                                     </span>
+                                                    <span className="flex items-center">
+                                                        <Clock size={12} className="mr-1" />
+                                                        {job.createdAt ? formatDistanceToNow(new Date(job.createdAt), { addSuffix: true }) : 'Recently'}
+                                                    </span>
                                                 </div>
                                                 {job.skill && (
                                                     <div className="flex flex-wrap gap-1 mt-2">
@@ -423,6 +428,10 @@ const SearchPageContent = () => {
                                                         <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
                                                             ${job.package}
                                                         </span>
+                                                        <span className="flex items-center">
+                                                                <Clock size={12} className="mr-1" />
+                                                                {job.createdAt ? formatDistanceToNow(new Date(job.createdAt), { addSuffix: true }) : 'Recently'}
+                                                            </span>
                                                     </div>
                                                     {job.skill && (
                                                         <div className="flex flex-wrap gap-1 mt-2">
@@ -519,15 +528,15 @@ const SearchPageContent = () => {
     // Main return statement for SearchPageContent
     return (
         <div className="min-h-screen bg-gray-50">
-            <div className="max-w-7xl mx-auto px-4 py-8">
+            <div className="max-w-7xl mx-auto px-4 py-4 lg:py-8">
                 {/* Search Header */}
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Search</h1>
-                    <p className="text-gray-600">Find people, jobs, and posts that match your skills</p>
+                <div className="mb-6 lg:mb-8">
+                    <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">Search</h1>
+                    <p className="text-sm lg:text-base text-gray-600">Find people, jobs, and posts that match your skills</p>
                 </div>
 
                 {/* Search Bar */}
-                <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
+                <div className="bg-white rounded-lg shadow-sm border p-4 lg:p-6 mb-6">
                     <div className="flex flex-col lg:flex-row gap-4">
                         <div className="flex-1">
                             <div className="relative">
@@ -537,15 +546,15 @@ const SearchPageContent = () => {
                                     placeholder="Search for skills, people, jobs, or posts..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full pl-10 pr-4 py-2 lg:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 />
                             </div>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                             <select
                                 value={selectedFilter}
                                 onChange={(e) => setSelectedFilter(e.target.value)}
-                                className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="px-3 lg:px-4 py-2 lg:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             >
                                 <option value="all">All</option>
                                 <option value="people">People</option>
@@ -554,10 +563,10 @@ const SearchPageContent = () => {
                             </select>
                             <button
                                 onClick={() => setShowJobForm(true)}
-                                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                                className="px-4 lg:px-6 py-2 lg:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
                             >
-                                <Plus size={20} />
-                                Submit Job
+                                <Plus size={18} className="lg:w-5 lg:h-5" />
+                                <span className="text-sm lg:text-base">Submit Job</span>
                             </button>
                         </div>
                     </div>
@@ -594,7 +603,7 @@ const SearchPageContent = () => {
                                                         <Users className="mr-2 text-green-600" size={16} />
                                                         People ({searchResults.people.length})
                                                     </h4>
-                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
                                                         {searchResults.people.map(user => (
                                                             <Link to={`/profile/${user.username}`} key={user._id} className="block">
                                                                 <div className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors cursor-pointer">
@@ -672,6 +681,10 @@ const SearchPageContent = () => {
                                                                                 <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
                                                                                     ${job.package}
                                                                                 </span>
+                                                                                <span className="flex items-center">
+                                                                                    <Clock size={12} className="mr-1" />
+                                                                                    {job.createdAt ? formatDistanceToNow(new Date(job.createdAt), { addSuffix: true }) : 'Recently'}
+                                                                                </span>
                                                                             </div>
                                                                             {job.skill && (
                                                                                 <div className="flex flex-wrap gap-1 mt-2">
@@ -744,7 +757,7 @@ const SearchPageContent = () => {
                                     {selectedFilter !== 'all' && (
                                         <div className="space-y-4">
                                             {selectedFilter === 'people' && searchResults.people && searchResults.people.length > 0 && (
-                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
                                                     {searchResults.people.map(user => (
                                                         <Link to={`/profile/${user.username}`} key={user._id} className="block">
                                                             <div className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors cursor-pointer">
@@ -815,6 +828,10 @@ const SearchPageContent = () => {
                                                                             </span>
                                                                             <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
                                                                                 ${job.package}
+                                                                            </span>
+                                                                            <span className="flex items-center">
+                                                                                <Clock size={12} className="mr-1" />
+                                                                                {job.createdAt ? formatDistanceToNow(new Date(job.createdAt), { addSuffix: true }) : 'Recently'}
                                                                             </span>
                                                                         </div>
                                                                         {job.skill && (
@@ -999,6 +1016,10 @@ const SearchPageContent = () => {
                                                                             </span>
                                                                             <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
                                                                                 ${job.package}
+                                                                            </span>
+                                                                            <span className="flex items-center">
+                                                                                <Clock size={12} className="mr-1" />
+                                                                                {job.createdAt ? formatDistanceToNow(new Date(job.createdAt), { addSuffix: true }) : 'Recently'}
                                                                             </span>
                                                                         </div>
                                                                         {job.skill && (

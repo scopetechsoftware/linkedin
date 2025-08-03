@@ -51,7 +51,7 @@ const AIChatWindow = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 w-96 h-[600px] bg-white rounded-lg shadow-2xl border border-gray-200 z-50">
+    <div className="fixed bottom-4 right-4 w-80 sm:w-96 h-[500px] sm:h-[600px] bg-white rounded-lg shadow-2xl border border-gray-200 z-50">
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-t-lg">
         <div className="flex items-center justify-between">
@@ -74,7 +74,7 @@ const AIChatWindow = ({ isOpen, onClose }) => {
       </div>
 
       {/* Chat Body */}
-      <div className="flex-1 p-4 overflow-y-auto h-[500px]">
+      <div className="flex-1 p-3 lg:p-4 overflow-y-auto h-[400px] sm:h-[500px]">
         {!userData ? (
           // Input Form
           <div className="space-y-4">

@@ -2,7 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "../../lib/axios";
 import toast from "react-hot-toast";
 import Sidebar from "../../components/Sidebar/Sidebar.jsx";
-import { ExternalLink, Eye, MessageSquare, ThumbsUp, Trash2, UserPlus, Share2, Star } from "lucide-react";
+import MobileSidebar from "../../components/MobileSidebar/MobileSidebar";
+import { ExternalLink, Eye, MessageSquare, ThumbsUp, Trash2, UserPlus, Share2, Star, Menu } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { useState, useEffect } from "react";
@@ -12,6 +13,7 @@ const NotificationsPage = () => {
     const { data: authUser } = useQuery({ queryKey: ["authUser"] });
     const { user } = useAuth();
     const queryClient = useQueryClient();
+    const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
     // State for project ratings
     const [projectRatings, setProjectRatings] = useState({});
     // State to track which projects the user has already rated
@@ -362,14 +364,24 @@ const NotificationsPage = () => {
 	};
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <div className='col-span-1 lg:col-span-1'>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6">
+            {/* Mobile Sidebar Toggle Button */}
+            <div className="md:hidden mb-4">
+                <button
+                    onClick={() => setIsMobileSidebarOpen(true)}
+                    className="bg-white shadow-md rounded-lg p-3 text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                    <Menu size={24} />
+                </button>
+            </div>
+            
+            <div className='hidden md:block lg:col-span-1'>
 				<Sidebar user={authUser} />
 			</div>
 
             <div className='col-span-1 lg:col-span-3'>
-				<div className='bg-white rounded-lg shadow p-6'>
-					<h1 className='text-2xl font-bold mb-6'>Notifications</h1>
+				<div className='bg-white rounded-lg shadow p-4 lg:p-6'>
+					<h1 className='text-xl lg:text-2xl font-bold mb-4 lg:mb-6'>Notifications</h1>
 
 					{isLoading ? (
 						<p>Loading notifications...</p>
@@ -378,17 +390,17 @@ const NotificationsPage = () => {
 							{notifications.data.map((notification) => (
 								<li
 									key={notification._id}
-									className={`border rounded-lg p-4 my-4 transition-all hover:shadow-md ${
+									className={`border rounded-lg p-3 lg:p-4 my-3 lg:my-4 transition-all hover:shadow-md ${
 										!notification.read ? "border-blue-500 bg-blue-50" : "border-gray-200 bg-white"
 									}`}
 								>
 									<div className='flex items-start justify-between'>
-										<div className='flex items-center space-x-4'>
+										<div className='flex items-center space-x-2 lg:space-x-4'>
 											<Link to={`/profile/${notification.relatedUser.username}`}>
 												<img
 													src={`http://localhost:5000/uploads/${notification.relatedUser.profilePicture}`|| "/avatar.png"}
 													alt={notification.relatedUser.name}
-													className='w-12 h-12 rounded-full object-cover'
+													className='w-10 h-10 lg:w-12 lg:h-12 rounded-full object-cover'
 												/>
 											</Link>
 
@@ -400,9 +412,9 @@ const NotificationsPage = () => {
 													<p className='text-sm'>{renderNotificationContent(notification)}</p>
 												</div>
 												<p className='text-xs text-gray-500 mt-1'>
-													{formatDistanceToNow(new Date(notification.createdAt), {
+													{notification.createdAt ? formatDistanceToNow(new Date(notification.createdAt), {
 														addSuffix: true,
-													})}
+													}) : 'Recently'}
 												</p>
 												{renderRelatedPost(notification.relatedPost)}
 											</div>
@@ -436,6 +448,13 @@ const NotificationsPage = () => {
 					)}
 				</div>
 			</div>
+			
+			{/* Mobile Sidebar */}
+			<MobileSidebar 
+				user={authUser} 
+				isOpen={isMobileSidebarOpen} 
+				onClose={() => setIsMobileSidebarOpen(false)} 
+			/>
         </div>
     )
 }

@@ -111,7 +111,7 @@ const Post = ({ post }) => {
 							</div>
 							<p className='text-xs text-info'>{post.author.headline}</p>
 							<p className='text-xs text-info'>
-								{formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
+								{post.createdAt ? formatDistanceToNow(new Date(post.createdAt), { addSuffix: true }) : 'Recently'}
 							</p>
 						</div>
 					</div>
@@ -155,7 +155,7 @@ const Post = ({ post }) => {
 									<div className='flex items-center mb-1'>
 										<span className='font-semibold mr-2'>{comment.user.name}</span>
 										<span className='text-xs text-info'>
-											{formatDistanceToNow(new Date(comment.createdAt))}
+											{comment.createdAt ? formatDistanceToNow(new Date(comment.createdAt)) : 'Recently'}
 										</span>
 									</div>
 									<p>{comment.content}</p>

@@ -116,7 +116,7 @@ const ProfilePage = () => {
 	};
 
 	return (
-		<div className='max-w-4xl mx-auto p-4'>
+		<div className='max-w-4xl mx-auto p-2 lg:p-4'>
 			<ProfileHeader userData={userData} isOwnProfile={false} />
 			
 			{/* Check if profile is private and not own profile */}
