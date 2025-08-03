@@ -595,4 +595,4 @@ const ChatWindow = ({ isOpen, onClose, selectedChat, setSelectedChat }) => {
 	);
 };
 
-export default ChatWindow;
+export default ChatWindow;     
