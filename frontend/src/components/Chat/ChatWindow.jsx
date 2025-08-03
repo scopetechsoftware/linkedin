@@ -25,6 +25,15 @@ const ChatWindow = ({ isOpen, onClose, selectedChat, setSelectedChat }) => {
 			return response.data;
 		},
 		enabled: isOpen && !selectedChat,
+		// Use persisted data if available
+		initialData: () => {
+			const persistedData = localStorage.getItem('query-chats');
+			return persistedData ? JSON.parse(persistedData) : undefined;
+		},
+		onSuccess: (data) => {
+			// Store the data in localStorage
+			localStorage.setItem('query-chats', JSON.stringify(data));
+		}
 	});
 
 	// Fetch messages for selected chat
@@ -40,8 +49,18 @@ const ChatWindow = ({ isOpen, onClose, selectedChat, setSelectedChat }) => {
 			}
 		},
 		enabled: !!selectedChat,
+		// Use persisted data if available
+		initialData: () => {
+			if (!selectedChat) return undefined;
+			const persistedData = localStorage.getItem(`query-chatMessages-${selectedChat._id}`);
+			return persistedData ? JSON.parse(persistedData) : undefined;
+		},
 		onSuccess: (data) => {
 			setMessages(data);
+			// Store the data in localStorage
+			if (selectedChat) {
+				localStorage.setItem(`query-chatMessages-${selectedChat._id}`, JSON.stringify(data));
+			}
 			// Scroll to bottom when messages are loaded
 			setTimeout(() => {
 				messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -108,23 +127,56 @@ const ChatWindow = ({ isOpen, onClose, selectedChat, setSelectedChat }) => {
 
 		// Mark messages as read
 		socket.emit("mark_read", { chatId: selectedChat._id });
+		// Invalidate unread count query
+		queryClient.invalidateQueries({ queryKey: ["unreadMessageCount"] });
 
 		// Listen for new messages
 		const handleReceiveMessage = (newMessage) => {
 			if (newMessage.chatId === selectedChat._id) {
-				setMessages((prev) => [...prev, newMessage]);
+				setMessages((prev) => {
+					const updatedMessages = [...prev, newMessage];
+					// Update localStorage with the new messages
+					localStorage.setItem(`query-chatMessages-${selectedChat._id}`, JSON.stringify(updatedMessages));
+					return updatedMessages;
+				});
 
 				// If the message is from the other user, mark it as read
 				if (newMessage.sender._id !== authUser._id) {
 					socket.emit("mark_read", { chatId: selectedChat._id });
+					// Invalidate unread count query
+					queryClient.invalidateQueries({ queryKey: ["unreadMessageCount"] });
 				}
+			}
+		};
+
+		// Listen for messages being marked as read
+		const handleMessagesRead = (data) => {
+			if (data.chatId === selectedChat._id) {
+				// Update the read status of messages in the current chat
+				setMessages((prev) => {
+					const updatedMessages = prev.map(msg => {
+						// If the message was sent by the current user and read by someone else
+						if (msg.sender._id === authUser._id && !msg.read) {
+							return { ...msg, read: true };
+						}
+						return msg;
+					});
+					// Update localStorage with the updated messages
+					localStorage.setItem(`query-chatMessages-${selectedChat._id}`, JSON.stringify(updatedMessages));
+					return updatedMessages;
+				});
 			}
 		};
 
 		// Listen for message deletion
 		const handleMessageDeleted = (data) => {
 			if (data.chatId === selectedChat._id) {
-				setMessages((prev) => prev.filter(msg => msg._id !== data.messageId));
+				setMessages((prev) => {
+					const updatedMessages = prev.filter(msg => msg._id !== data.messageId);
+					// Update localStorage with the filtered messages
+					localStorage.setItem(`query-chatMessages-${selectedChat._id}`, JSON.stringify(updatedMessages));
+					return updatedMessages;
+				});
 				setSelectedMessageId(null);
 			}
 		};
@@ -146,6 +198,7 @@ const ChatWindow = ({ isOpen, onClose, selectedChat, setSelectedChat }) => {
 		socket.on("message_deleted", handleMessageDeleted);
 		socket.on("user_typing", handleUserTyping);
 		socket.on("user_stop_typing", handleUserStopTyping);
+		socket.on("messages_read", handleMessagesRead);
 
 		return () => {
 			// Leave the chat room when component unmounts or chat changes
@@ -154,6 +207,7 @@ const ChatWindow = ({ isOpen, onClose, selectedChat, setSelectedChat }) => {
 			socket.off("message_deleted", handleMessageDeleted);
 			socket.off("user_typing", handleUserTyping);
 			socket.off("user_stop_typing", handleUserStopTyping);
+			socket.off("messages_read", handleMessagesRead);
 		};
 	}, [socket, selectedChat, authUser]);
 
@@ -167,6 +221,12 @@ const ChatWindow = ({ isOpen, onClose, selectedChat, setSelectedChat }) => {
 		if (!selectedChat) {
 			setMessages([]);
 			setSelectedMessageId(null);
+		} else {
+			// Load messages from localStorage if available
+			const persistedMessages = localStorage.getItem(`query-chatMessages-${selectedChat._id}`);
+			if (persistedMessages) {
+				setMessages(JSON.parse(persistedMessages));
+			}
 		}
 	}, [selectedChat]);
 
