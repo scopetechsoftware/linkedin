@@ -148,7 +148,7 @@ const AffiliationForm = ({ isOpen, onClose, userRole }) => {
                             <div className="mt-2 p-2 border rounded-md flex items-center justify-between">
                                 <div className="flex items-center">
                                     <img 
-                                        src={selectedUser.profilePicture || "/avatar.png"} 
+                                        src={selectedUser.profilePicture? `http://localhost:5000/uploads/${selectedUser.profilePicture}` : "/avatar.png"} 
                                         alt={selectedUser.name} 
                                         className="w-8 h-8 rounded-full mr-2"
                                     />

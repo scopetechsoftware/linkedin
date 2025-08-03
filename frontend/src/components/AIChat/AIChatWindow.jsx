@@ -153,7 +153,7 @@ const AIChatWindow = ({ isOpen, onClose }) => {
             <div className="bg-white border border-gray-200 rounded-lg p-4">
               <div className="flex items-center space-x-3 mb-4">
                 <img
-                  src={userData.profilePicture || "/avatar.png"}
+                  src={userData.profilePicture?  `http://localhost:5000/uploads/${userData.profilePicture}` : "/avatar.png"}
                   alt={userData.name}
                   className="w-12 h-12 rounded-full object-cover"
                 />

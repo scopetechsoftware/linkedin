@@ -563,7 +563,7 @@ const ProjectsPage = () => {
                                                                             onClick={() => handleToggleShareUser(user)}
                                                                         >
                                                                             <div className="flex items-center">
-                                                                                <img src={user.profilePicture || "/avatar.png"} alt={user.name} className="w-6 h-6 rounded-full mr-2" />
+                                                                                <img src={user.profilePicture?  `http://localhost:5000/uploads/${user.profilePicture}` : "/avatar.png"} alt={user.name} className="w-6 h-6 rounded-full mr-2" />
                                                                                 <span>{user.name} {user.email && <span className="text-xs text-gray-500 ml-1">({user.email})</span>}</span>
                                                                             </div>
                                                                             {isSelected && <span className="text-green-600 font-bold ml-2">&#10003;</span>}
@@ -632,7 +632,7 @@ const ProjectsPage = () => {
                                                     {project.collaborators.map(collab => (
                                                         <div key={collab._id} className="flex items-center bg-gray-100 px-2 py-1 rounded-full text-xs">
                                                             <img
-                                                                src={collab.profilePicture || "/avatar.png"}
+                                                                src={collab.profilePicture? `http://localhost:5000/uploads/${collab.profilePicture}` : "/avatar.png"}
                                                                 alt={collab.name}
                                                                 className="w-4 h-4 rounded-full mr-1"
                                                             />

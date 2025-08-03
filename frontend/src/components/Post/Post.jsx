@@ -136,7 +136,7 @@ const Post = ({ post }) => {
 						text={`Comment (${comments.length})`}
 						onClick={() => setShowComments(!showComments)}
 					/>
-					<PostAction icon={<Share2 size={18} />} text='Share' />
+					{/* <PostAction icon={<Share2 size={18} />} text='Share' /> */}
 				</div>
 			</div>
 			{showComments && (

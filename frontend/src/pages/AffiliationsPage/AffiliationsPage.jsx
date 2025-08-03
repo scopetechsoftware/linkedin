@@ -134,7 +134,7 @@ const AffiliationsPage = () => {
                                 <div className="flex items-center">
                                     <Link to={`/profile/${person.username}`}>
                                         <img
-                                            src={person.profilePicture || "/avatar.png"}
+                                            src={person.profilePicture?  `http://localhost:5000/uploads/${person.profilePicture}` : "/avatar.png"}
                                             alt={person.name}
                                             className="w-12 h-12 rounded-full mr-4 hover:opacity-90 transition-opacity"
                                         />

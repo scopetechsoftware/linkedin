@@ -10,78 +10,78 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext.jsx";
 
 const NotificationsPage = () => {
-    const { data: authUser } = useQuery({ queryKey: ["authUser"] });
-    const { user } = useAuth();
-    const queryClient = useQueryClient();
-    const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-    // State for project ratings
-    const [projectRatings, setProjectRatings] = useState({});
-    // State to track which projects the user has already rated
-    const [userRatedProjects, setUserRatedProjects] = useState({});
+	const { data: authUser } = useQuery({ queryKey: ["authUser"] });
+	const { user } = useAuth();
+	const queryClient = useQueryClient();
+	const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+	// State for project ratings
+	const [projectRatings, setProjectRatings] = useState({});
+	// State to track which projects the user has already rated
+	const [userRatedProjects, setUserRatedProjects] = useState({});
 
-    const { data: notifications, isLoading } = useQuery({
+	const { data: notifications, isLoading } = useQuery({
 		queryKey: ["notifications"],
 		queryFn: () => axiosInstance.get("/notifications"),
 	});
-	
+
 	// Fetch projects that the current user has already rated
 	useEffect(() => {
 		if (!user) return;
-		
+
 		const fetchUserRatings = async () => {
 			try {
 				// Get all projects from notifications
 				const projectIds = notifications?.data
 					?.filter(n => n.type === "projectShared" && n.relatedProject)
 					?.map(n => n.relatedProject._id) || [];
-				
+
 				// Remove duplicates
 				const uniqueProjectIds = [...new Set(projectIds)];
-				
+
 				if (uniqueProjectIds.length === 0) return;
-				
+
 				// For each project, check if the user has already rated it
 				const ratedProjectsMap = {};
-				
+
 				await Promise.all(uniqueProjectIds.map(async (projectId) => {
 					try {
 						const response = await axiosInstance.get(`/projects/${projectId}/ratings`);
-						const hasUserRated = response.data.some(rating => 
+						const hasUserRated = response.data.some(rating =>
 							rating.sender._id === user._id
 						);
-						
+
 						ratedProjectsMap[projectId] = hasUserRated;
 					} catch (error) {
 						console.error(`Error checking rating for project ${projectId}:`, error);
 					}
 				}));
-				
+
 				setUserRatedProjects(ratedProjectsMap);
 			} catch (error) {
 				console.error("Error fetching user ratings:", error);
 			}
 		};
-		
+
 		if (notifications?.data) {
 			fetchUserRatings();
 		}
 	}, [notifications, user]);
 
-    const { mutate: markAsReadMutation } = useMutation({
+	const { mutate: markAsReadMutation } = useMutation({
 		mutationFn: (id) => axiosInstance.put(`/notifications/${id}/read`),
 		onSuccess: () => {
 			queryClient.invalidateQueries(["notifications"]);
 		},
 	});
 
-    const { mutate: deleteNotificationMutation } = useMutation({
+	const { mutate: deleteNotificationMutation } = useMutation({
 		mutationFn: (id) => axiosInstance.delete(`/notifications/${id}`),
 		onSuccess: () => {
 			queryClient.invalidateQueries(["notifications"]);
 			toast.success("Notification deleted");
 		},
 	});
-	
+
 	// Rate project mutation
 	const { mutate: rateProjectMutation } = useMutation({
 		mutationFn: ({ projectId, rating, comment }) => {
@@ -98,7 +98,7 @@ const NotificationsPage = () => {
 			toast.error("Failed to rate project");
 		},
 	});
-	
+
 	// Handle rating a project
 	const handleRateProject = (projectId, rating) => {
 		setProjectRatings(prev => ({
@@ -109,7 +109,7 @@ const NotificationsPage = () => {
 			}
 		}));
 	};
-	
+
 	// Handle comment change
 	const handleCommentChange = (projectId, comment) => {
 		setProjectRatings(prev => ({
@@ -120,7 +120,7 @@ const NotificationsPage = () => {
 			}
 		}));
 	};
-	
+
 	// Submit rating and comment
 	const handleSubmitRating = (projectId) => {
 		const projectRating = projectRatings[projectId];
@@ -128,7 +128,7 @@ const NotificationsPage = () => {
 			toast.error("Please select a rating");
 			return;
 		}
-		
+
 		rateProjectMutation({
 			projectId,
 			rating: projectRating.rating,
@@ -140,7 +140,7 @@ const NotificationsPage = () => {
 			delete newRatings[projectId];
 			return newRatings;
 		});
-		
+
 		// Mark this project as rated by the user
 		setUserRatedProjects(prev => ({
 			...prev,
@@ -148,8 +148,8 @@ const NotificationsPage = () => {
 		}));
 	};
 
-    // render the notifications icon
-    const renderNotificationIcon = (type) => {
+	// render the notifications icon
+	const renderNotificationIcon = (type) => {
 		switch (type) {
 			case "like":
 				return <ThumbsUp className='text-blue-500' />;
@@ -169,8 +169,8 @@ const NotificationsPage = () => {
 		}
 	};
 
-    // render the notification content
-    const renderNotificationContent = (notification) => {
+	// render the notification content
+	const renderNotificationContent = (notification) => {
 		switch (notification.type) {
 			case "like":
 				return (
@@ -268,7 +268,7 @@ const NotificationsPage = () => {
 							<div className="mt-2 p-3 bg-gray-50 rounded-md">
 								<h3 className="font-medium">{notification.relatedProject.name}</h3>
 								<p className="text-sm text-gray-600 mt-1">{notification.relatedProject.description}</p>
-								
+
 								{/* Rating Component - Only show if user hasn't rated this project yet */}
 								{!userRatedProjects[notification.relatedProject._id] ? (
 									<div className="mt-3">
@@ -284,7 +284,7 @@ const NotificationsPage = () => {
 												</button>
 											))}
 										</div>
-										
+
 										{/* Comment Box */}
 										<div className="mt-2">
 											<textarea
@@ -310,12 +310,12 @@ const NotificationsPage = () => {
 										</p>
 									</div>
 								)}
-								
+
 								<div className="mt-3 flex gap-2">
 									{notification.relatedProject.gitlink && (
-										<a 
-											href={notification.relatedProject.gitlink} 
-											target="_blank" 
+										<a
+											href={notification.relatedProject.gitlink}
+											target="_blank"
 											rel="noopener noreferrer"
 											className="text-xs bg-gray-200 px-2 py-1 rounded flex items-center gap-1"
 										>
@@ -323,9 +323,9 @@ const NotificationsPage = () => {
 										</a>
 									)}
 									{notification.relatedProject.projecturl && (
-										<a 
-											href={notification.relatedProject.projecturl} 
-											target="_blank" 
+										<a
+											href={notification.relatedProject.projecturl}
+											target="_blank"
 											rel="noopener noreferrer"
 											className="text-xs bg-gray-200 px-2 py-1 rounded flex items-center gap-1"
 										>
@@ -365,8 +365,8 @@ const NotificationsPage = () => {
 		}
 	};
 
-    // render related post
-    const renderRelatedPost = (relatedPost) => {
+	// render related post
+	const renderRelatedPost = (relatedPost) => {
 		if (!relatedPost) return null;
 
 		return (
@@ -385,23 +385,23 @@ const NotificationsPage = () => {
 		);
 	};
 
-    return (
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6">
-            {/* Mobile Sidebar Toggle Button */}
-            <div className="md:hidden mb-4">
-                <button
-                    onClick={() => setIsMobileSidebarOpen(true)}
-                    className="bg-white shadow-md rounded-lg p-3 text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                    <Menu size={24} />
-                </button>
-            </div>
-            
-            <div className='hidden md:block lg:col-span-1'>
+	return (
+		<div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6">
+			{/* Mobile Sidebar Toggle Button */}
+			<div className="md:hidden mb-4">
+				<button
+					onClick={() => setIsMobileSidebarOpen(true)}
+					className="bg-white shadow-md rounded-lg p-3 text-gray-700 hover:bg-gray-50 transition-colors"
+				>
+					<Menu size={24} />
+				</button>
+			</div>
+
+			<div className='hidden md:block lg:col-span-1'>
 				<Sidebar user={authUser} />
 			</div>
 
-            <div className='col-span-1 lg:col-span-3'>
+			<div className='col-span-1 lg:col-span-3'>
 				<div className='bg-white rounded-lg shadow p-4 lg:p-6'>
 					<h1 className='text-xl lg:text-2xl font-bold mb-4 lg:mb-6'>Notifications</h1>
 
@@ -412,19 +412,23 @@ const NotificationsPage = () => {
 							{notifications.data.map((notification) => (
 								<li
 									key={notification._id}
-									className={`border rounded-lg p-3 lg:p-4 my-3 lg:my-4 transition-all hover:shadow-md ${
-										!notification.read ? "border-blue-500 bg-blue-50" : "border-gray-200 bg-white"
-									}`}
+									className={`border rounded-lg p-3 lg:p-4 my-3 lg:my-4 transition-all hover:shadow-md ${!notification.read ? "border-blue-500 bg-blue-50" : "border-gray-200 bg-white"
+										}`}
 								>
 									<div className='flex items-start justify-between'>
 										<div className='flex items-center space-x-2 lg:space-x-4'>
 											<Link to={`/profile/${notification.relatedUser.username}`}>
 												<img
-													src={`http://localhost:5000/uploads/${notification.relatedUser.profilePicture}`|| "/avatar.png"}
+													src={
+														notification.relatedUser.profilePicture
+															? `http://localhost:5000/uploads/${notification.relatedUser.profilePicture}`
+															: "/avatar.png"
+													}
 													alt={notification.relatedUser.name}
-													className='w-10 h-10 lg:w-12 lg:h-12 rounded-full object-cover'
+													className="w-10 h-10 lg:w-12 lg:h-12 rounded-full object-cover"
 												/>
 											</Link>
+
 
 											<div>
 												<div className='flex items-center gap-2'>
@@ -470,15 +474,15 @@ const NotificationsPage = () => {
 					)}
 				</div>
 			</div>
-			
+
 			{/* Mobile Sidebar */}
-			<MobileSidebar 
-				user={authUser} 
-				isOpen={isMobileSidebarOpen} 
-				onClose={() => setIsMobileSidebarOpen(false)} 
+			<MobileSidebar
+				user={authUser}
+				isOpen={isMobileSidebarOpen}
+				onClose={() => setIsMobileSidebarOpen(false)}
 			/>
-        </div>
-    )
+		</div>
+	)
 }
 
 export default NotificationsPage

@@ -6,6 +6,7 @@ const initialState = {
   title: "",
   package: "",
   type: "fulltime",
+  applylink: "",
   description: "",
   skill: "",
   technology: "",
@@ -26,7 +27,7 @@ const JobPostingForm = ({ isOpen, onClose, onPosted }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.title || !form.package || !form.type || !form.description || !form.skill || !form.technology || !form.location || !form.outDate) {
+    if (!form.title || !form.package || !form.type || !form.description || !form.skill || !form.technology || !form.location || !form.outDate || !form.applylink) {
       setError("All fields are required.");
       return;
     }
@@ -69,6 +70,7 @@ const JobPostingForm = ({ isOpen, onClose, onPosted }) => {
             <label className="block font-medium">Description</label>
             <textarea name="description" value={form.description} onChange={handleChange} className="w-full border rounded px-2 py-1" />
           </div>
+          
           <div>
             <label className="block font-medium">Skill</label>
             <input name="skill" value={form.skill} onChange={handleChange} className="w-full border rounded px-2 py-1" />
@@ -80,6 +82,10 @@ const JobPostingForm = ({ isOpen, onClose, onPosted }) => {
           <div>
             <label className="block font-medium">Location</label>
             <input name="location" value={form.location} onChange={handleChange} className="w-full border rounded px-2 py-1" />
+          </div>
+          <div>
+            <label className="block font-medium">apply link</label>
+            <input type="url" name="applylink" value={form.applylink} onChange={handleChange} className="w-full border rounded px-2 py-1" />
           </div>
           <div>
             <label className="block font-medium">Out Date for Apply</label>

@@ -3,8 +3,8 @@ import Job from "../models/job.model.js";
 // Create a new job posting
 export const createJob = async (req, res) => {
   try {
-    const { title, package: pkg, type, description, skill, technology, location, outDate } = req.body;
-    if (!title || !pkg || !type || !description || !skill || !technology || !location || !outDate) {
+    const { title, package: pkg, type, description, skill, technology, location, outDate, applylink } = req.body;
+    if (!title || !pkg || !type || !description || !skill || !technology || !location || !outDate || !applylink) {
       return res.status(400).json({ message: "All fields are required." });
     }
     if (isNaN(Date.parse(outDate))) {
@@ -14,6 +14,7 @@ export const createJob = async (req, res) => {
         title,
         package: pkg,
         type,
+        applylink,
         description,
         skill,
         technology,

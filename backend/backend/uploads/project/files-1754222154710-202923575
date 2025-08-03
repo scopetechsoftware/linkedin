@@ -1,0 +1,4 @@
+MONGO_URI=mongodb://localhost:27017/linkedin-clone
+JWT_SECRET=linkedin-clone-secret-key-2024-updated
+NODE_ENV=development
+PORT=5000

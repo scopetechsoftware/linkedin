@@ -59,18 +59,18 @@ const ProfilePage = () => {
 		mutationFn: async (updatedData) => {
 			// Create FormData for file uploads
 			const formData = new FormData();
-			
+
 			// Add all fields to FormData
 			Object.keys(updatedData).forEach(key => {
 				// Check if the value is a base64 string for profile picture or banner image
-				if ((key === 'profilePicture' || key === 'bannerImg') && updatedData[key] && 
+				if ((key === 'profilePicture' || key === 'bannerImg') && updatedData[key] &&
 					typeof updatedData[key] === 'string' && updatedData[key].startsWith('data:')) {
 					// Skip base64 strings - they'll be handled by the file input directly
 				} else {
 					formData.append(key, updatedData[key]);
 				}
 			});
-			
+
 			await axiosInstance.put("/users/profile", formData, {
 				headers: {
 					'Content-Type': 'multipart/form-data'
@@ -87,10 +87,10 @@ const ProfilePage = () => {
 
 	const isOwnProfile = authUser.username === userProfile.data.username;
 	const userData = isOwnProfile ? authUser : userProfile.data;
-	
+
 	// Check if this is a limited profile (private profile)
 	const isLimitedProfile = userData && Object.keys(userData).length <= 6 && userData.privacySettings?.isProfilePrivate;
-	
+
 
 
 	const handleSave = (updatedData) => {
@@ -118,7 +118,7 @@ const ProfilePage = () => {
 	return (
 		<div className='max-w-4xl mx-auto p-2 lg:p-4'>
 			<ProfileHeader userData={userData} isOwnProfile={false} />
-			
+
 			{/* Check if profile is private and not own profile */}
 			{isLimitedProfile && !isOwnProfile ? (
 				<div className="bg-white rounded-lg shadow-lg p-6 text-center my-4">
@@ -141,55 +141,55 @@ const ProfilePage = () => {
 						isPostsLoading ? (
 							<div className="bg-white rounded-lg shadow p-6 text-center my-4">Loading posts...</div>
 						) : userPosts?.data?.length > 0 ? (
-						<div className="bg-white rounded-lg shadow p-6 my-4">
-							<div className="flex items-center justify-between mb-4">
-								<h2 className="text-xl font-bold flex items-center">
-									<FileText className="mr-2" size={20} />
-									Posts
-								</h2>
-								<Link 
-									to={`/`}
-									className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-								>
-									View All ({userPosts.data.length})
-								</Link>
-							</div>
-							<div className="space-y-4">
-								{userPosts.data.slice(0, 3).map((post) => (
-									<Link 
-										key={post._id} 
+							<div className="bg-white rounded-lg shadow p-6 my-4">
+								<div className="flex items-center justify-between mb-4">
+									<h2 className="text-xl font-bold flex items-center">
+										<FileText className="mr-2" size={20} />
+										Posts
+									</h2>
+									<Link
 										to={`/`}
-										className="block bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors"
+										className="text-blue-600 hover:text-blue-800 text-sm font-medium"
 									>
-										<div className="flex items-start justify-between">
-											<div className="flex-1">
-												<h3 className="font-semibold text-lg mb-2">{post.title || "Post"}</h3>
-												<p className="text-gray-700 line-clamp-3">{post.content}</p>
-												<div className="flex items-center space-x-4 text-sm text-gray-600 mt-2">
-													<span className="flex items-center">
-														<Calendar size={14} className="mr-1" />
-														{format(new Date(post.createdAt), "MMM dd, yyyy")}
-													</span>
-													{post.likes && (
+										View All ({userPosts.data.length})
+									</Link>
+								</div>
+								<div className="space-y-4">
+									{userPosts.data.slice(0, 3).map((post) => (
+										<Link
+											key={post._id}
+											to={`/`}
+											className="block bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors"
+										>
+											<div className="flex items-start justify-between">
+												<div className="flex-1">
+													<h3 className="font-semibold text-lg mb-2">{post.title || "Post"}</h3>
+													<p className="text-gray-700 line-clamp-3">{post.content}</p>
+													<div className="flex items-center space-x-4 text-sm text-gray-600 mt-2">
 														<span className="flex items-center">
-															<Users size={14} className="mr-1" />
-															{post.likes.length} likes
+															<Calendar size={14} className="mr-1" />
+															{format(new Date(post.createdAt), "MMM dd, yyyy")}
 														</span>
-													)}
-													{post.comments && (
-														<span className="flex items-center">
-															<FileText size={14} className="mr-1" />
-															{post.comments.length} comments
-														</span>
-													)}
+														{post.likes && (
+															<span className="flex items-center">
+																<Users size={14} className="mr-1" />
+																{post.likes.length} likes
+															</span>
+														)}
+														{post.comments && (
+															<span className="flex items-center">
+																<FileText size={14} className="mr-1" />
+																{post.comments.length} comments
+															</span>
+														)}
+													</div>
 												</div>
 											</div>
-										</div>
-									</Link>
-								))}
+										</Link>
+									))}
+								</div>
 							</div>
-						</div>
-					) : null
+						) : null
 					)}
 
 					{/* Jobs Section - Only show if not limited profile */}
@@ -197,61 +197,61 @@ const ProfilePage = () => {
 						isJobsLoading ? (
 							<div className="bg-white rounded-lg shadow p-6 text-center my-4">Loading jobs...</div>
 						) : userJobs?.data?.length > 0 ? (
-						<div className="bg-white rounded-lg shadow p-6 my-4">
-							<div className="flex items-center justify-between mb-4">
-								<h2 className="text-xl font-bold flex items-center">
-									<Briefcase className="mr-2" size={20} />
-									Job Postings
-								</h2>
-								<Link 
-									to={`/jobs/user/${username}`}
-									className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-								>
-									View All ({userJobs.data.length})
-								</Link>
-							</div>
-							<div className="space-y-4">
-								{userJobs.data.slice(0, 3).map((job) => (
-									<Link 
-										key={job._id} 
-										to={`/jobs/${job._id}`}
-										className="block bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors"
+							<div className="bg-white rounded-lg shadow p-6 my-4">
+								<div className="flex items-center justify-between mb-4">
+									<h2 className="text-xl font-bold flex items-center">
+										<Briefcase className="mr-2" size={20} />
+										Job Postings
+									</h2>
+									<Link
+										to={`/jobs/user/${username}`}
+										className="text-blue-600 hover:text-blue-800 text-sm font-medium"
 									>
-										<div className="flex items-start justify-between">
-											<div className="flex-1">
-												<h3 className="font-semibold text-lg mb-2">{job.title}</h3>
-												<div className="flex items-center text-sm text-gray-600 mb-2">
-													<Briefcase className="mr-1" size={14} />
-													<span className="text-blue-600 font-medium">{userData.name}</span>
-												</div>
-												<div className="flex items-center space-x-4 text-sm text-gray-600 mb-2">
-													<span className="flex items-center">
-														<MapPin size={14} className="mr-1" />
-														{job.location}
-													</span>
-													<span className="flex items-center">
-														<Clock size={14} className="mr-1" />
-														{job.type}
-													</span>
-													<span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
-														${job.package}
-													</span>
-												</div>
-												<p className="text-gray-700 line-clamp-2">{job.description}</p>
-												<div className="flex flex-wrap gap-2 mt-2">
-													{job.skill?.split(',').map((skill, index) => (
-														<span key={index} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-															{skill.trim()}
+										View All ({userJobs.data.length})
+									</Link>
+								</div>
+								<div className="space-y-4">
+									{userJobs.data.slice(0, 3).map((job) => (
+										<Link
+											key={job._id}
+											to={`/jobs/${job._id}`}
+											className="block bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors"
+										>
+											<div className="flex items-start justify-between">
+												<div className="flex-1">
+													<h3 className="font-semibold text-lg mb-2">{job.title}</h3>
+													<div className="flex items-center text-sm text-gray-600 mb-2">
+														<Briefcase className="mr-1" size={14} />
+														<span className="text-blue-600 font-medium">{userData.name}</span>
+													</div>
+													<div className="flex items-center space-x-4 text-sm text-gray-600 mb-2">
+														<span className="flex items-center">
+															<MapPin size={14} className="mr-1" />
+															{job.location}
 														</span>
-													))}
+														<span className="flex items-center">
+															<Clock size={14} className="mr-1" />
+															{job.type}
+														</span>
+														<span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
+															${job.package}
+														</span>
+													</div>
+													<p className="text-gray-700 line-clamp-2">{job.description}</p>
+													<div className="flex flex-wrap gap-2 mt-2">
+														{job.skill?.split(',').map((skill, index) => (
+															<span key={index} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+																{skill.trim()}
+															</span>
+														))}
+													</div>
 												</div>
 											</div>
-										</div>
-									</Link>
-								))}
+										</Link>
+									))}
+								</div>
 							</div>
-						</div>
-					) : null
+						) : null
 					)}
 
 					{/* Affiliators Section (Organizations that the user is affiliated with) - Only show if not limited profile */}
@@ -259,91 +259,93 @@ const ProfilePage = () => {
 						isAffiliationsLoading ? (
 							<div className="bg-white rounded-lg shadow p-6 text-center my-4">Loading affiliators...</div>
 						) : userAffiliations?.data?.length > 0 ? (
-						<div className="bg-white rounded-lg shadow p-6 my-4">
-							<div className="flex items-center mb-4">
-								<h2 className="text-xl font-bold flex items-center">
-									<Building className="mr-2" size={20} />
-									Organizations & Companies
-								</h2>
-							</div>
-							<div className="space-y-4">
-								{userAffiliations.data.slice(0, 3).map((affiliation) => {
-									const org = affiliation.affiliator;
-									const getOrgType = (role) => {
-										switch (role) {
-											case "company":
-												return "Company";
-											case "university":
-												return "University";
-											case "employer":
-												return "Employer";
-											default:
-												return "Organization";
-										}
-									};
-									
-									// Use organization name, fallback to username if name is not set
-									const orgDisplayName = org.name || org.username;
-									
-									return (
-										<Link 
-										key={affiliation._id} 
-										to={`/`}
-										className={`block bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors ${!affiliation.isActive ? 'opacity-70' : ''}`}
-									>
-											<div className="flex items-start justify-between">
-												<div className="flex items-center">
-													<img
-														src={org.profilePicture || "/avatar.png"}
-														alt={orgDisplayName}
-														className="w-12 h-12 rounded-full mr-4"
-													/>
-													<div>
-														<div className="flex items-center gap-2">
-															<h3 className="font-semibold text-lg">{orgDisplayName}</h3>
-															<span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-																{getOrgType(org.role)}
-															</span>
+							<div className="bg-white rounded-lg shadow p-6 my-4">
+								<div className="flex items-center mb-4">
+									<h2 className="text-xl font-bold flex items-center">
+										<Building className="mr-2" size={20} />
+										Organizations & Companies
+									</h2>
+								</div>
+								<div className="space-y-4">
+									{userAffiliations.data.slice(0, 3).map((affiliation) => {
+										const org = affiliation.affiliator;
+										const getOrgType = (role) => {
+											switch (role) {
+												case "company":
+													return "Company";
+												case "university":
+													return "University";
+												case "employer":
+													return "Employer";
+												default:
+													return "Organization";
+											}
+										};
+
+										// Use organization name, fallback to username if name is not set
+										const orgDisplayName = org.name || org.username;
+
+										return (
+											<Link
+												key={affiliation._id}
+												to={`/`}
+												className={`block bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors ${!affiliation.isActive ? 'opacity-70' : ''}`}
+											>
+												<div className="flex items-start justify-between">
+													<div className="flex items-center">
+									 	 						<img
+															src={org.profilePicture ? `http://localhost:5000/uploads/${org.profilePicture}`
+																: "/avatar.png"
+															}
+															alt={orgDisplayName}
+															className="w-12 h-12 rounded-full mr-4"
+														/>
+														<div>
+															<div className="flex items-center gap-2">
+																<h3 className="font-semibold text-lg">{orgDisplayName}</h3>
+																<span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+																	{getOrgType(org.role)}
+																</span>
+															</div>
+															<p className="text-gray-600 text-sm">{org.headline || org.email}</p>
+															<div className="flex items-center mt-1 text-sm text-gray-700">
+																{getRoleIcon(affiliation.role)}
+																<span className="capitalize">{userData.name} role: {affiliation.role}</span>
+															</div>
+															<div className="flex items-center mt-1 text-sm text-gray-700">
+																<Calendar className="mr-2" size={16} />
+																<span>
+																	{formatDate(affiliation.startDate)} - {formatDate(affiliation.endDate)}
+																</span>
+															</div>
+															{!affiliation.isActive && (
+																<div className="flex items-center mt-1 text-sm text-red-500">
+																	<XCircle className="mr-2" size={16} />
+																	<span>Deactivated</span>
+																</div>
+															)}
 														</div>
-														<p className="text-gray-600 text-sm">{org.headline || org.email}</p>
-														<div className="flex items-center mt-1 text-sm text-gray-700">
-															{getRoleIcon(affiliation.role)}
-															<span className="capitalize">{userData.name} role: {affiliation.role}</span>
-														</div>
-														<div className="flex items-center mt-1 text-sm text-gray-700">
-															<Calendar className="mr-2" size={16} />
-															<span>
-																{formatDate(affiliation.startDate)} - {formatDate(affiliation.endDate)}
-															</span>
-														</div>
-														{!affiliation.isActive && (
-															<div className="flex items-center mt-1 text-sm text-red-500">
-																<XCircle className="mr-2" size={16} />
-																<span>Deactivated</span>
+													</div>
+													<div className="flex-shrink-0">
+														{affiliation.isActive ? (
+															<div className="text-green-500 flex items-center">
+																<CheckCircle size={16} className="mr-1" />
+																<span className="text-xs">Active</span>
+															</div>
+														) : (
+															<div className="text-red-500 flex items-center">
+																<XCircle size={16} className="mr-1" />
+																<span className="text-xs">Inactive</span>
 															</div>
 														)}
 													</div>
 												</div>
-												<div className="flex-shrink-0">
-													{affiliation.isActive ? (
-														<div className="text-green-500 flex items-center">
-															<CheckCircle size={16} className="mr-1" />
-															<span className="text-xs">Active</span>
-														</div>
-													) : (
-														<div className="text-red-500 flex items-center">
-															<XCircle size={16} className="mr-1" />
-															<span className="text-xs">Inactive</span>
-														</div>
-													)}
-												</div>
-											</div>
-										</Link>
-									);
-								})}
+											</Link>
+										);
+									})}
+								</div>
 							</div>
-						</div>
-					) : null
+						) : null
 					)}
 
 					{/* Affiliations Section (Users who are affiliated with this profile) - Only show if not limited profile */}
@@ -351,76 +353,78 @@ const ProfilePage = () => {
 						isAffiliatedUsersLoading ? (
 							<div className="bg-white rounded-lg shadow p-6 text-center my-4">Loading affiliations...</div>
 						) : affiliatedUsers?.data?.length > 0 ? (
-						<div className="bg-white rounded-lg shadow p-6 my-4">
-							<div className="flex items-center mb-4">
-								<h2 className="text-xl font-bold flex items-center">
-									<Users className="mr-2" size={20} />
-									Affiliated Users
-								</h2>
-							</div>
-							<div className="space-y-4">
-								{affiliatedUsers.data.slice(0, 3).map((affiliation) => {
-									const user = affiliation.affiliated;
-									
-									return (
-										<Link 
-										key={affiliation._id} 
-										to={`/`}
-										className={`block bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors ${!affiliation.isActive ? 'opacity-70' : ''}`}
-									>
-											<div className="flex items-start justify-between">
-												<div className="flex items-center">
-													<img
-														src={user.profilePicture || "/avatar.png"}
-														alt={user.name}
-														className="w-12 h-12 rounded-full mr-4"
-													/>
-													<div>
-														<div className="flex items-center gap-2">
-															<h3 className="font-semibold text-lg">{user.name}</h3>
-															<span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
-																{affiliation.role}
-															</span>
+							<div className="bg-white rounded-lg shadow p-6 my-4">
+								<div className="flex items-center mb-4">
+									<h2 className="text-xl font-bold flex items-center">
+										<Users className="mr-2" size={20} />
+										Affiliated Users
+									</h2>
+								</div>
+								<div className="space-y-4">
+									{affiliatedUsers.data.slice(0, 3).map((affiliation) => {
+										const user = affiliation.affiliated;
+
+										return (
+											<Link
+												key={affiliation._id}
+												to={`/`}
+												className={`block bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors ${!affiliation.isActive ? 'opacity-70' : ''}`}
+											>
+												<div className="flex items-start justify-between">
+													<div className="flex items-center">
+														<img
+															src={user.profilePicture? `http://localhost:5000/uploads/${user.profilePicture}`
+        : "/avatar.png"
+    }
+															alt={user.name}
+															className="w-12 h-12 rounded-full mr-4"
+														/>
+														<div>
+															<div className="flex items-center gap-2">
+																<h3 className="font-semibold text-lg">{user.name}</h3>
+																<span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+																	{affiliation.role}
+																</span>
+															</div>
+															<p className="text-gray-600 text-sm">{user.headline || user.email}</p>
+															<div className="flex items-center mt-1 text-sm text-gray-700">
+																{getRoleIcon(affiliation.role)}
+																<span className="capitalize">Role: {affiliation.role}</span>
+															</div>
+															<div className="flex items-center mt-1 text-sm text-gray-700">
+																<Calendar className="mr-2" size={16} />
+																<span>
+																	{formatDate(affiliation.startDate)} - {formatDate(affiliation.endDate)}
+																</span>
+															</div>
+															{!affiliation.isActive && (
+																<div className="flex items-center mt-1 text-sm text-red-500">
+																	<XCircle className="mr-2" size={16} />
+																	<span>Deactivated</span>
+																</div>
+															)}
 														</div>
-														<p className="text-gray-600 text-sm">{user.headline || user.email}</p>
-														<div className="flex items-center mt-1 text-sm text-gray-700">
-															{getRoleIcon(affiliation.role)}
-															<span className="capitalize">Role: {affiliation.role}</span>
-														</div>
-														<div className="flex items-center mt-1 text-sm text-gray-700">
-															<Calendar className="mr-2" size={16} />
-															<span>
-																{formatDate(affiliation.startDate)} - {formatDate(affiliation.endDate)}
-															</span>
-														</div>
-														{!affiliation.isActive && (
-															<div className="flex items-center mt-1 text-sm text-red-500">
-																<XCircle className="mr-2" size={16} />
-																<span>Deactivated</span>
+													</div>
+													<div className="flex-shrink-0">
+														{affiliation.isActive ? (
+															<div className="text-green-500 flex items-center">
+																<CheckCircle size={16} className="mr-1" />
+																<span className="text-xs">Active</span>
+															</div>
+														) : (
+															<div className="text-red-500 flex items-center">
+																<XCircle size={16} className="mr-1" />
+																<span className="text-xs">Inactive</span>
 															</div>
 														)}
 													</div>
 												</div>
-												<div className="flex-shrink-0">
-													{affiliation.isActive ? (
-														<div className="text-green-500 flex items-center">
-															<CheckCircle size={16} className="mr-1" />
-															<span className="text-xs">Active</span>
-														</div>
-													) : (
-														<div className="text-red-500 flex items-center">
-															<XCircle size={16} className="mr-1" />
-															<span className="text-xs">Inactive</span>
-														</div>
-													)}
-												</div>
-											</div>
-										</Link>
-									);
-								})}
+											</Link>
+										);
+									})}
+								</div>
 							</div>
-						</div>
-					) : null
+						) : null
 					)}
 
 					{/* Only show detailed sections if not limited profile */}

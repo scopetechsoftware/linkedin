@@ -5,6 +5,7 @@ const jobSchema = new mongoose.Schema(
     title: { type: String, required: true },
     package: { type: String, required: true },
     type: { type: String, enum: ["freelancer", "fulltime", "partime"], required: true },
+    applylink:{ type: String, required: true },
     description: { type: String, required: true },
     skill: { type: String, required: true },
     technology: { type: String, required: true },
